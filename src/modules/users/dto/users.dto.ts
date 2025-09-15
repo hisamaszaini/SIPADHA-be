@@ -12,7 +12,7 @@ export const StatusUsersEnum = z.enum([
 ])
 
 export const baseCreateUserSchema = z.object({
-  noHp: z.string().nonempty('Nomor HP Wajib diisi, (+62...)').min(11, 'Nomor HP minimal 11 digit').max(15, 'Nomor HP Maksimal 15'),
+  noHp: z.string().nonempty('Nomor HP Wajib diisi, (08...)').min(11, 'Nomor HP minimal 11 digit').max(15, 'Nomor HP Maksimal 15').trim(),
   email: z.email().nonempty('Email wajib diisi').trim(),
   username: z.string().nonempty('Username wajib diisi').trim(),
   password: z.string().nonempty('Password wajib diisi').min(8, 'Password minimal 8 karakter'),
@@ -23,9 +23,9 @@ export const baseCreateUserSchema = z.object({
   path: ['confirmPassword'],
 });
 
-export const createUserSchema = baseCreateUserSchema.merge(
+export const adminPengurusCreateUserSchema = baseCreateUserSchema.merge(
   z.object({
-    role: RoleUsersEnum,
+    role: z.enum(['ADMIN', 'PENGURUS']),
   })
 );
 
@@ -62,7 +62,14 @@ export const updateProfileSchema = z
   )
   .strict();
 
-export type CreateUserDto = z.infer<typeof createUserSchema>;
+export const registerSchema = z.discriminatedUnion("role", [
+  adminPengurusCreateUserSchema,
+  wargaCreateUserSchema,
+]);
+
+
+export type CreateUserDto = z.infer<typeof registerSchema>;
 export type wargaCreateUserDto = z.infer<typeof wargaCreateUserSchema>;
 export type UpdateUserDto = z.infer<typeof updateUserSchema>;
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;
+export type RegisterDto = z.infer<typeof registerSchema>;

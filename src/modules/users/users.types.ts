@@ -10,10 +10,11 @@ interface PaginatedResult<T> {
 }
 
 // Interface untuk query parameters
-interface FindAllQueryParams {
+interface UserFindAllQueryParams {
   page?: number;
   limit?: number;
   search?: string;
+  role: 'ADMIN' | 'PENGURUS' | 'WARGA';
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }

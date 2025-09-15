@@ -38,7 +38,6 @@ export class AuthController {
 
   /* Register */
   @Post('register')
-  @UsePipes(new ZodValidationPipe(registerSchema))
   @HttpCode(201)
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
@@ -46,7 +45,6 @@ export class AuthController {
 
   /* Register for Warga */
   @Post('registerWarga')
-  @UsePipes(new ZodValidationPipe(registerSchema))
   @HttpCode(201)
   async registerWarga(@Body() dto: WargaRegisterDto) {
     return this.authService.registerWarga(dto);

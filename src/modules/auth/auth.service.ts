@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -20,10 +21,15 @@ export class AuthService {
 
   // REGISTER USER
   async register(dto: RegisterDto) {
-    const exists = await this.prisma.user.findUnique({
+    const emailExists = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-    if (exists) throw new ConflictException('Email already registered');
+    if (emailExists) throw new ConflictException('Email sudah terdaftar');
+
+    const usernameExists = await this.prisma.user.findUnique({
+      where: { username: dto.username },
+    });
+    if (usernameExists) throw new ConflictException('Username sudah terdaftar');
 
     const user = await this.prisma.user.create({
       data: {
@@ -36,20 +42,31 @@ export class AuthService {
     });
 
     const { password, refreshToken, ...userData } = user;
-    return { message: 'User created', data: userData };
+    return { message: 'Akun berhasil dibuat', data: userData };
   }
 
   async registerWarga(dto: WargaRegisterDto) {
-    const exists = await this.prisma.user.findUnique({
+    const emailExists = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-    if (exists) throw new ConflictException('Email already registered');
+    if (emailExists) throw new ConflictException('Email sudah terdaftar');
 
-    const nikExists = await this.prisma.penduduk.findUnique({
+    const usernameExists = await this.prisma.user.findUnique({
+      where: { username: dto.username },
+    });
+    if (usernameExists) throw new ConflictException('Username sudah terdaftar');
+
+    const penduduk = await this.prisma.penduduk.findUnique({
       where: { nik: dto.nik },
     });
 
-    if (nikExists) throw new ConflictException('NIK already registered');
+    if (!penduduk) {
+      throw new BadRequestException('NIK tidak ditemukan di data penduduk');
+    }
+
+    if (penduduk.userId) {
+      throw new ConflictException('NIK sudah digunakan untuk akun lain');
+    }
 
     const user = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -63,7 +80,7 @@ export class AuthService {
       });
 
       await tx.penduduk.update({
-        where: { nik: dto.nik },
+        where: { id: penduduk.id },
         data: { userId: user.id },
       });
 
@@ -71,7 +88,7 @@ export class AuthService {
     });
 
     const { password, refreshToken, ...userData } = user;
-    return { message: 'User created', data: userData };
+    return { message: 'Akun warga berhasil dibuat', data: userData };
   }
 
   // LOGIN
