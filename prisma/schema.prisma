@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StatusSurat {
+  PENDING
+  DIPROSES
+  SELESAI
+  DITOLAK
+}
+
+enum Role {
+  ADMIN
+  PENGURUS
+  WARGA
+}
+
+enum StatusUser {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  noHp         String
+  email        String     @unique
+  username     String     @unique
+  password     String
+  role         Role       @default(WARGA)
+  statusUser   StatusUser @default(ACTIVE)
+  refreshToken String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  penduduk       Penduduk?
+  PengajuanSurat PengajuanSurat[]
+}
+
+model Dukuh {
+  id   Int    @id @default(autoincrement())
+  nama String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rws           Rw[]
+  KartuKeluarga KartuKeluarga[]
+}
+
+model Rw {
+  id      Int    @id @default(autoincrement())
+  nomor   String
+  dukuhId Int
+  dukuh   Dukuh  @relation(fields: [dukuhId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rts           Rt[]
+  KartuKeluarga KartuKeluarga[]
+}
+
+model Rt {
+  id    Int    @id @default(autoincrement())
+  nomor String
+  rwId  Int
+  rw    Rw     @relation(fields: [rwId], references: [id])
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  KartuKeluarga KartuKeluarga[]
+}
+
+model KartuKeluarga {
+  id               Int    @id @default(autoincrement())
+  noKk             String @unique
+  alamat           String
+  dukuhId          Int
+  rwId             Int
+  rtId             Int
+  kepalaPendudukId Int?   @unique
+
+  dukuh Dukuh @relation(fields: [dukuhId], references: [id])
+  rw    Rw    @relation(fields: [rwId], references: [id])
+  rt    Rt    @relation(fields: [rtId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  kepalaKeluarga  Penduduk?  @relation("KepalaKeluarga", fields: [kepalaPendudukId], references: [id])
+  anggotaKeluarga Penduduk[] @relation("AnggotaKeluarga")
+}
+
+model Penduduk {
+  id                    Int      @id @default(autoincrement())
+  nik                   String   @unique
+  nama                  String
+  tempatLahir           String
+  tanggalLahir          DateTime
+  jenisKelamin          String
+  agama                 String
+  statusPerkawinan      String
+  pendidikan            String?
+  pekerjaan             String?
+  hubunganDalamKeluarga String
+
+  kartuKeluargaId Int
+  kartuKeluarga   KartuKeluarga @relation("AnggotaKeluarga", fields: [kartuKeluargaId], references: [id])
+
+  kepalaDariKeluarga KartuKeluarga? @relation("KepalaKeluarga")
+
+  user   User? @relation(fields: [userId], references: [id])
+  userId Int?  @unique
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  pengajuanSurat PengajuanSurat[]
+}
+
+model JenisSurat {
+  id           Int              @id @default(autoincrement())
+  kode         String           @unique
+  namaSurat    String
+  deskripsi    String?
+  templateFile String
+  pengajuan    PengajuanSurat[]
+}
+
+model PengajuanSurat {
+  id             Int         @id @default(autoincrement())
+  pendudukId     Int
+  jenisSuratId   Int
+  status         StatusSurat @default(PENDING)
+  catatan        String?
+  dataPermohonan Json
+  fileHasil      String?
+
+  penduduk   Penduduk   @relation(fields: [pendudukId], references: [id])
+  jenisSurat JenisSurat @relation(fields: [jenisSuratId], references: [id])
+
+  createdById Int
+  createdBy   User @relation(fields: [createdById], references: [id])
+
+  createdAt  DateTime  @default(now())
+  processAt  DateTime?
+  processEnd DateTime?
+  updatedAt  DateTime  @updatedAt
+}

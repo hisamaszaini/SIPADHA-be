@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desa Maju Sejahtera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .hero-bg {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.8)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600"><rect fill="%2316a34a" width="1000" height="600"/><path fill="none" stroke="%23ffffff" stroke-width="2" opacity="0.1" d="M100 300c100-50 200 50 300 0s200-50 300 0 200 50 300 0v300H100V300z"/></svg>');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .scroll-smooth {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+
+<body class="scroll-smooth">
+    <!-- Header Navigation -->
+    <nav class="bg-green-600 shadow-lg fixed w-full z-50 top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-mountain text-white text-2xl mr-3"></i>
+                        <span class="text-white text-xl font-bold">Desa Maju Sejahtera</span>
+                    </div>
+                </div>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#home"
+                        class="text-white hover:text-green-200 px-3 py-2 rounded-md transition duration-300">Beranda</a>
+                    <a href="#about"
+                        class="text-white hover:text-green-200 px-3 py-2 rounded-md transition duration-300">Tentang</a>
+                    <a href="#services"
+                        class="text-white hover:text-green-200 px-3 py-2 rounded-md transition duration-300">Layanan</a>
+                    <a href="#news"
+                        class="text-white hover:text-green-200 px-3 py-2 rounded-md transition duration-300">Berita</a>
+                    <a href="#contact"
+                        class="text-white hover:text-green-200 px-3 py-2 rounded-md transition duration-300">Kontak</a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-white hover:text-green-200 focus:outline-none">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden bg-green-700 hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="#home" class="text-white block px-3 py-2 rounded-md hover:bg-green-800">Beranda</a>
+                <a href="#about" class="text-white block px-3 py-2 rounded-md hover:bg-green-800">Tentang</a>
+                <a href="#services" class="text-white block px-3 py-2 rounded-md hover:bg-green-800">Layanan</a>
+                <a href="#news" class="text-white block px-3 py-2 rounded-md hover:bg-green-800">Berita</a>
+                <a href="#contact" class="text-white block px-3 py-2 rounded-md hover:bg-green-800">Kontak</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero-bg min-h-screen flex items-center justify-center relative">
+        <div class="text-center text-white px-4 max-w-4xl mx-auto">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 animate-fade-in-up">
+                Selamat Datang di <br>
+                <span class="text-yellow-300">Desa Maju Sejahtera</span>
+            </h1>
+            <p class="text-xl md:text-2xl mb-8 opacity-90 leading-relaxed">
+                Desa yang indah, masyarakat yang harmonis, dan masa depan yang cerah
+            </p>
+            <div class="space-y-4 md:space-y-0 md:space-x-4 md:flex md:justify-center">
+                <button
+                    class="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-semibold px-8 py-3 rounded-full transition duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Pelajari Lebih Lanjut
+                </button>
+                <button
+                    class="bg-transparent border-2 border-white text-white hover:bg-white hover:text-green-600 font-semibold px-8 py-3 rounded-full transition duration-300 transform hover:scale-105">
+                    <i class="fas fa-phone mr-2"></i>
+                    Hubungi Kami
+                </button>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 text-white animate-bounce">
+            <i class="fas fa-chevron-down text-2xl"></i>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Tentang Desa Kami</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Desa Maju Sejahtera adalah sebuah komunitas yang berkomitmen untuk kemajuan bersama dan
+                    kesejahteraan masyarakat
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="bg-white rounded-2xl shadow-xl p-8">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6">Visi & Misi</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <h4 class="text-lg font-semibold text-green-600 mb-2">
+                                    <i class="fas fa-eye mr-2"></i>Visi
+                                </h4>
+                                <p class="text-gray-700">
+                                    Menjadi desa yang mandiri, sejahtera, dan berkelanjutan dengan masyarakat yang
+                                    berkarakter dan berdaya saing.
+                                </p>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-green-600 mb-2">
+                                    <i class="fas fa-bullseye mr-2"></i>Misi
+                                </h4>
+                                <ul class="text-gray-700 space-y-2">
+                                    <li>• Meningkatkan kesejahteraan masyarakat</li>
+                                    <li>• Mengembangkan potensi desa</li>
+                                    <li>• Melestarikan budaya lokal</li>
+                                    <li>• Membangun infrastruktur berkelanjutan</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl p-6 text-center shadow-lg card-hover">
+                        <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-users text-green-600 text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-900 mb-2">2,500+</h4>
+                        <p class="text-gray-600">Penduduk</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-6 text-center shadow-lg card-hover">
+                        <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-home text-blue-600 text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-900 mb-2">650+</h4>
+                        <p class="text-gray-600">Rumah Tangga</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-6 text-center shadow-lg card-hover">
+                        <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-seedling text-yellow-600 text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-900 mb-2">850</h4>
+                        <p class="text-gray-600">Hektare Lahan</p>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-6 text-center shadow-lg card-hover">
+                        <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-store text-purple-600 text-2xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-900 mb-2">45+</h4>
+                        <p class="text-gray-600">UMKM</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Layanan Publik</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Berbagai layanan terbaik untuk memenuhi kebutuhan masyarakat desa
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8 text-center card-hover">
+                    <div class="bg-green-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-id-card text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Administrasi Kependudukan</h3>
+                    <p class="text-gray-700 mb-6">Pelayanan KTP, KK, akta kelahiran, dan dokumen kependudukan lainnya
+                    </p>
+                    <button
+                        class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full transition duration-300">
+                        Selengkapnya
+                    </button>
+                </div>
+
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 text-center card-hover">
+                    <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-heart text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Kesehatan</h3>
+                    <p class="text-gray-700 mb-6">Posyandu, puskesmas pembantu, dan program kesehatan masyarakat</p>
+                    <button
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full transition duration-300">
+                        Selengkapnya
+                    </button>
+                </div>
+
+                <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-8 text-center card-hover">
+                    <div class="bg-yellow-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-graduation-cap text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Pendidikan</h3>
+                    <p class="text-gray-700 mb-6">PAUD, sekolah dasar, dan program pendidikan non-formal</p>
+                    <button
+                        class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-full transition duration-300">
+                        Selengkapnya
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- News Section -->
+    <section id="news" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Berita & Kegiatan</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Update terbaru tentang kegiatan dan perkembangan desa
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <article class="bg-white rounded-2xl overflow-hidden shadow-lg card-hover">
+                    <div class="h-48 bg-gradient-to-br from-green-400 to-green-600"></div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <i class="fas fa-calendar mr-2"></i>
+                            <span>15 Agustus 2025</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Perayaan HUT RI ke-80</h3>
+                        <p class="text-gray-700 mb-4">Kemeriahan perayaan kemerdekaan Indonesia dengan berbagai lomba
+                            dan kegiatan menarik...</p>
+                        <button class="text-green-600 font-semibold hover:text-green-700">
+                            Baca selengkapnya <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </article>
+
+                <article class="bg-white rounded-2xl overflow-hidden shadow-lg card-hover">
+                    <div class="h-48 bg-gradient-to-br from-blue-400 to-blue-600"></div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <i class="fas fa-calendar mr-2"></i>
+                            <span>10 Agustus 2025</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Program BLT Dana Desa</h3>
+                        <p class="text-gray-700 mb-4">Penyaluran bantuan langsung tunai untuk masyarakat kurang mampu
+                            dari dana desa...</p>
+                        <button class="text-green-600 font-semibold hover:text-green-700">
+                            Baca selengkapnya <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </article>
+
+                <article class="bg-white rounded-2xl overflow-hidden shadow-lg card-hover">
+                    <div class="h-48 bg-gradient-to-br from-yellow-400 to-yellow-600"></div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <i class="fas fa-calendar mr-2"></i>
+                            <span>5 Agustus 2025</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900 mb-3">Gotong Royong Pembangunan Jalan</h3>
+                        <p class="text-gray-700 mb-4">Partisipasi aktif warga dalam pembangunan jalan desa untuk
+                            aksesibilitas yang lebih baik...</p>
+                        <button class="text-green-600 font-semibold hover:text-green-700">
+                            Baca selengkapnya <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Hubungi Kami</h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Jangan ragu untuk menghubungi kami untuk informasi lebih lanjut
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <div class="space-y-8">
+                        <div class="flex items-start">
+                            <div class="bg-green-100 p-3 rounded-full mr-4">
+                                <i class="fas fa-map-marker-alt text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900 mb-1">Alamat</h4>
+                                <p class="text-gray-700">Jl. Desa Sejahtera No. 123<br>Kecamatan Maju, Kabupaten
+                                    Jaya<br>Indonesia 12345</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="bg-green-100 p-3 rounded-full mr-4">
+                                <i class="fas fa-phone text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900 mb-1">Telepon</h4>
+                                <p class="text-gray-700">(021) 123-4567</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="bg-green-100 p-3 rounded-full mr-4">
+                                <i class="fas fa-envelope text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900 mb-1">Email</h4>
+                                <p class="text-gray-700">info@desamajusejahtera.id</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start">
+                            <div class="bg-green-100 p-3 rounded-full mr-4">
+                                <i class="fas fa-clock text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-900 mb-1">Jam Operasional</h4>
+                                <p class="text-gray-700">Senin - Jumat: 08:00 - 16:00<br>Sabtu: 08:00 - 12:00</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 rounded-2xl p-8">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6">Kirim Pesan</h3>
+                    <form class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap</label>
+                            <input type="text"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Pesan</label>
+                            <textarea rows="4"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent"></textarea>
+                        </div>
+                        <button type="submit"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg transition duration-300">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Kirim Pesan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-green-800 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-6">
+                        <i class="fas fa-mountain text-2xl mr-3"></i>
+                        <span class="text-xl font-bold">Desa Maju Sejahtera</span>
+                    </div>
+                    <p class="text-green-200 mb-4">
+                        Membangun desa yang mandiri, sejahtera, dan berkelanjutan untuk generasi masa depan.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="bg-green-700 hover:bg-green-600 p-2 rounded-full transition duration-300">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="#" class="bg-green-700 hover:bg-green-600 p-2 rounded-full transition duration-300">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="bg-green-700 hover:bg-green-600 p-2 rounded-full transition duration-300">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">Link Cepat</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#home" class="text-green-200 hover:text-white transition duration-300">Beranda</a>
+                        </li>
+                        <li><a href="#about" class="text-green-200 hover:text-white transition duration-300">Tentang</a>
+                        </li>
+                        <li><a href="#services"
+                                class="text-green-200 hover:text-white transition duration-300">Layanan</a></li>
+                        <li><a href="#news" class="text-green-200 hover:text-white transition duration-300">Berita</a>
+                        </li>
+                        <li><a href="#contact"
+                                class="text-green-200 hover:text-white transition duration-300">Kontak</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">Layanan</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-green-200 hover:text-white transition duration-300">Administrasi</a>
+                        </li>
+                        <li><a href="#" class="text-green-200 hover:text-white transition duration-300">Kesehatan</a>
+                        </li>
+                        <li><a href="#" class="text-green-200 hover:text-white transition duration-300">Pendidikan</a>
+                        </li>
+                        <li><a href="#" class="text-green-200 hover:text-white transition duration-300">Ekonomi</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-6">Kontak Info</h4>
+                    <div class="space-y-3">
+                        <p class="text-green-200">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            Jl. Desa Sejahtera No. 123
+                        </p>
+                        <p class="text-green-200">
+                            <i class="fas fa-phone mr-2"></i>
+                            (021) 123-4567
+                        </p>
+                        <p class="text-green-200">
+                            <i class="fas fa-envelope mr-2"></i>
+                            info@desamajusejahtera.id
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-green-700 mt-12 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-green-200 text-sm">
+                        © 2025 Desa Maju Sejahtera. Semua hak dilindungi.
+                    </p>
+                    <div class="flex space-x-6 mt-4 md:mt-0">
+                        <a href="#" class="text-green-200 hover:text-white text-sm transition duration-300">Kebijakan
+                            Privasi</a>
+                        <a href="#" class="text-green-200 hover:text-white text-sm transition duration-300">Syarat &
+                            Ketentuan</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top"
+        class="fixed bottom-8 right-8 bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition-all duration-300 opacity-0 invisible">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Back to Top Button
+        const backToTopBtn = document.getElementById('back-to-top');
+
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                backToTopBtn.style.opacity = '1';
+                backToTopBtn.style.visibility = 'visible';
+            } else {
+                backToTopBtn.style.opacity = '0';
+                backToTopBtn.style.visibility = 'invisible';
+            }
+        });
+
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+    </script>
+</body>
+
+</html>
