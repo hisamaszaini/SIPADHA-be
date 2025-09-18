@@ -95,15 +95,48 @@ export class UsersService {
 
     const data: any = {};
 
-    if (dto.username) data.username = dto.username;
-    if (dto.password) {
-      if (dto.password !== dto.confirmPassword) {
-        throw new BadRequestException('Password dan konfirmasi tidak cocok');
+    // noHp
+    if (dto.noHp) data.noHp = dto.noHp;
+
+    // Username
+    if (dto.username) {
+      if (dto.username !== user.username) {
+        const exists = await this.prisma.user.findUnique({ where: { username: dto.username } });
+        if (exists) throw new BadRequestException('Username sudah digunakan');
       }
-      data.password = await hash(dto.password);
+      data.username = dto.username;
     }
+
+    // Email
+    if (dto.email) {
+      if (dto.email !== user.email) {
+        const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
+        if (exists) throw new BadRequestException('Email sudah digunakan');
+      }
+      data.email = dto.email;
+    }
+
+    // Role & status
     if (dto.role) data.role = dto.role;
     if (dto.statusUser) data.statusUser = dto.statusUser;
+
+    // NIK hanya untuk WARGA
+    if ((dto.role === 'WARGA' || user.role === 'WARGA') && dto.nik) {
+      const penduduk = await this.prisma.penduduk.findUnique({ where: { nik: dto.nik } });
+      if (!penduduk) throw new BadRequestException('NIK tidak ditemukan di data penduduk');
+
+      if (penduduk.userId && penduduk.userId !== id) {
+        throw new BadRequestException('NIK sudah terdaftar di user lain');
+      }
+
+      data.nik = dto.nik;
+    }
+
+    // Password
+    if (dto.password) {
+      if (dto.password !== dto.confirmPassword) throw new BadRequestException('Password dan konfirmasi tidak cocok');
+      data.password = await hash(dto.password);
+    }
 
     const updated = await this.prisma.user.update({
       where: { id },
@@ -218,6 +251,7 @@ export class UsersService {
         where: { id },
         select: {
           id: true,
+          noHp: true,
           username: true,
           email: true,
           role: true,

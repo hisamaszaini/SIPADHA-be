@@ -11,9 +11,7 @@ export const createPendudukSchema = z.object({
     pendidikan: z.enum(['Tidak/Belum Sekolah', 'SD', 'SMP', 'SMA/SMK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3']),
     pekerjaan: z.string().trim().optional(),
     hubunganDalamKeluarga: z.enum(['Kepala Keluarga', 'Istri', 'Anak', 'Famili Lain', 'Cucu', 'Orang Tua']).optional(),
-    kartuKeluargaId: z.string().nonempty('Kartu Keluarga wajib dipilih')
-        .transform((val) => Number(val))
-        .pipe(z.number().int().positive('Kartu Keluarga tidak valid')),
+    kartuKeluargaId: z.preprocess((val) => { if (typeof val === 'string') { return val.trim() === '' ? NaN : Number(val); } return val; }, z.number('Kartu keluarga wajib dipilih').int('kartuKeluargaId harus bilangan bulat').positive('Kartu keluarga tidak valid'),),
     userId: z.string().trim().optional().transform((val) => (val ? Number(val) : null)).refine((val) => val === null || (Number.isInteger(val) && val > 0), {
         message: 'User tidak valid',
     }),

@@ -1,4 +1,4 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException } from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { Request, Response } from 'express';
 
 @Catch(HttpException)
@@ -8,32 +8,33 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
-    const excResp = exception.getResponse();
+    const excResp = exception.getResponse() as any;
 
-    let message: any = typeof excResp === 'string' ? excResp : (excResp as any).message || 'Error';
-    let errorCode = (excResp as any)?.error || 'UNKNOWN_ERROR';
-    let details = (excResp as any)?.details || null;
+    let body: any;
 
-    // ==== TWEAK: Tangani Zod error ====
-    if (Array.isArray(message) && message.every(m => m.path && m.message)) {
-      // Zod issue format
-      const fieldErrors: Record<string, string> = {};
-      for (const err of message) {
-        const field = err.path[0];
-        fieldErrors[field] = err.message;
-      }
-      message = fieldErrors;
-      errorCode = 'VALIDATION_ERROR';
-      details = null;
+    if (status === HttpStatus.BAD_REQUEST && excResp.errors) {
+      body = {
+        success: false,
+        message: excResp.message || 'Validasi gagal',
+        error: {
+          code: 'VALIDATION_ERROR',
+          details: excResp.errors,
+        },
+      };
+    } 
+    else {
+      body = {
+        success: false,
+        message: typeof excResp === 'string' ? excResp : excResp.message,
+        error: {
+          code: excResp.error || 'UNKNOWN_ERROR',
+          details: null,
+        },
+      };
     }
 
     response.status(status).json({
-      success: false,
-      message,
-      error: {
-        code: errorCode,
-        details,
-      },
+      ...body,
       timestamp: new Date().toISOString(),
       path: request.url,
     });

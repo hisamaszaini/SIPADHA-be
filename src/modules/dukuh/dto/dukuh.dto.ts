@@ -1,9 +1,10 @@
+import { createZodDto } from "nestjs-zod";
 import z from "zod";
 
 export const createDukuhSchema = z.object({
-    nama: z.string().nonempty('Nama dukuh wajib diisi').trim()
+    nama: z.string().trim().nonempty('Nama dukuh wajib diisi')
 });
 export const updateDukuhSchema = createDukuhSchema.partial();
 
-export type CreateDukuhDto = z.infer<typeof createDukuhSchema>;
-export type UpdateDukuhDto = z.infer<typeof updateDukuhSchema>;
+export class CreateDukuhDto extends createZodDto(createDukuhSchema) {}
+export class UpdateDukuhDto extends createZodDto(updateDukuhSchema) {}

@@ -38,11 +38,14 @@ export const wargaCreateUserSchema = baseCreateUserSchema.merge(
 
 export const updateUserSchema = z
   .object({
+    noHp: z.string().nonempty('No HP wajib diisi').trim().optional(),
     username: z.string().nonempty().trim().optional(),
+    email: z.email().nonempty('Email wajib diisi'),
     password: z.string().min(8).optional(),
     confirmPassword: z.string().optional(),
     role: RoleUsersEnum.optional(),
     statusUser: StatusUsersEnum.optional(),
+    nik: z.string().min(16, 'Nomor Induk Kependudukan minimal 16 digit').trim().regex(/^[0-9]+$/, 'Nomor Induk Kependudukan hanya boleh mengandung angka').optional(),
   })
   .refine(
     d => !d.password || (d.confirmPassword && d.password === d.confirmPassword),

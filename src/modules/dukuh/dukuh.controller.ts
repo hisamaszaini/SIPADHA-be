@@ -12,10 +12,10 @@ import {
   HttpStatus,
   Req,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { DukuhService } from './dukuh.service';
 import { CreateDukuhDto, UpdateDukuhDto, createDukuhSchema, updateDukuhSchema } from './dto/dukuh.dto';
-import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { Roles } from '@/common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -27,10 +27,18 @@ export class DukuhController {
 
   @Post()
   @Roles('ADMIN', 'PENGURUS')
-  // @UsePipes(new ZodValidationPipe(createDukuhSchema))
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createDukuhDto: CreateDukuhDto) {
-    return this.dukuhService.create(createDukuhDto);
+  create(@Body() dto: CreateDukuhDto) {
+    const validatedData = createDukuhSchema.safeParse(dto);
+    if (!validatedData.success) {
+      const formattedErrors = validatedData.error.flatten();
+      throw new BadRequestException({
+        message: 'Data yang dikirim tidak valid',
+        errors: formattedErrors.fieldErrors,
+      });
+    }
+    const data = validatedData.data;
+    return this.dukuhService.create(data);
   }
 
   @Get()
@@ -61,11 +69,20 @@ export class DukuhController {
 
   @Patch(':id')
   @Roles('ADMIN', 'PENGURUS')
-  // @UsePipes(new ZodValidationPipe(updateDukuhSchema))
   @HttpCode(HttpStatus.OK)
-  update(@Param('id') id: string, @Body() updateDukuhDto: UpdateDukuhDto) {
-    console.log('UPDATE Dukuh', id, updateDukuhDto);
-    return this.dukuhService.update(+id, updateDukuhDto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateDukuhDto) {
+    const validatedData = createDukuhSchema.safeParse(dto);
+    if (!validatedData.success) {
+      const formattedErrors = validatedData.error.flatten();
+      throw new BadRequestException({
+        message: 'Data yang dikirim tidak valid',
+        errors: formattedErrors.fieldErrors,
+      });
+    }
+    const data = validatedData.data;
+    return this.dukuhService.update(+id, data);
   }
 
 

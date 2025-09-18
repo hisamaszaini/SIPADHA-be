@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   InternalServerErrorException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreatePendudukDto, UpdatePendudukDto } from './dto/penduduk.dto';
@@ -103,6 +104,7 @@ export class PendudukService {
         data: penduduk,
       };
     } catch (error) {
+      console.error(error);
       if (
         error instanceof ConflictException ||
         error instanceof NotFoundException
@@ -113,7 +115,7 @@ export class PendudukService {
     }
   }
 
-  async findAll(queryParams: FindAllQueryParams): Promise<PaginatedResult<any>> {
+  async findAll(queryParams: FindAllQueryParams, user: { userId: number; role: string }): Promise<PaginatedResult<any>> {
     try {
       const {
         page = 1,
@@ -147,7 +149,18 @@ export class PendudukService {
         ];
       }
 
-      if (kepalaKeluargaId) {
+      if (user.role === 'WARGA') {
+        const checkKk = await this.prisma.penduduk.findFirst({
+          where: { userId: user.userId },
+          select: { kartuKeluargaId: true }
+        });
+
+        if (!checkKk) {
+          throw new ForbiddenException('Anda tidak memiliki akses ke data penduduk');
+        }
+
+        where.kartuKeluargaId = checkKk?.kartuKeluargaId;
+      } else if ((user.role === 'ADMIN' || user.role === 'PENGURUS') && kepalaKeluargaId) {
         where.kepalaKeluargaId = kepalaKeluargaId;
       }
 
@@ -165,18 +178,16 @@ export class PendudukService {
 
       // Filter by wilayah
       if (rtId || rwId || dukuhId) {
-        where.kartuKeluarga = {};
+        where.kartuKeluarga = { rt: {} };
 
         if (rtId) {
           where.kartuKeluarga.rtId = rtId;
         }
-
         if (rwId) {
-          where.kartuKeluarga.rt = { rwId };
+          where.kartuKeluarga.rt.rwId = rwId;
         }
-
         if (dukuhId) {
-          where.kartuKeluarga.rt = { rw: { dukuhId } };
+          where.kartuKeluarga.rt.rw = { dukuhId };
         }
       }
 
@@ -258,6 +269,7 @@ export class PendudukService {
         },
       };
     } catch (error) {
+      console.error(error);
       if (error instanceof BadRequestException) {
         throw error;
       }
@@ -291,7 +303,7 @@ export class PendudukService {
               role: true,
             },
           },
-          pengajuanSurat: {
+          pengajuanDibuat: {
             include: {
               jenisSurat: true,
             },
@@ -452,7 +464,7 @@ export class PendudukService {
         include: {
           _count: {
             select: {
-              pengajuanSurat: true,
+              pengajuanDibuat: true,
             },
           },
         },
@@ -463,7 +475,7 @@ export class PendudukService {
       }
 
       // Check if penduduk has pengajuan surat
-      if (penduduk._count.pengajuanSurat > 0) {
+      if (penduduk._count.pengajuanDibuat > 0) {
         throw new ConflictException('Tidak dapat menghapus penduduk yang masih memiliki pengajuan surat');
       }
 

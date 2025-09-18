@@ -1,3 +1,4 @@
+import { createZodDto } from "nestjs-zod";
 import z from "zod";
 
 export const createRwSchema = z.object({
@@ -7,5 +8,6 @@ export const createRwSchema = z.object({
 
 export const updateRwSchema = createRwSchema.partial();
 
-export type CreateRwDto = z.infer<typeof createRwSchema>;
-export type UpdateRwDto = z.infer<typeof updateRwSchema>;
+export class CreateRwDto extends createZodDto(createRwSchema) {}
+export class UpdateRwDto extends createZodDto(updateRwSchema) {}
+

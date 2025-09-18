@@ -9,6 +9,7 @@ import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
 import { join } from 'path';
 import { cwd } from 'process';
+import { ZodValidationPipe } from 'nestjs-zod';
 
 moduleAlias.addAliases({
   '@': path.resolve(__dirname, 'src'),
@@ -22,7 +23,8 @@ async function bootstrap() {
     credentials: true,
   });
   app.use(cookieParser());
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  // app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  // app.useGlobalPipes(new ZodValidationPipe());
   app.useGlobalInterceptors(new ApiResponseInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.use('/uploads', express.static(join(cwd(), 'uploads')));

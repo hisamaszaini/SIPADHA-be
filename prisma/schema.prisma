@@ -125,9 +125,12 @@ model Penduduk {
   user   User? @relation(fields: [userId], references: [id])
   userId Int?  @unique
 
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  pengajuanSurat PengajuanSurat[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pengajuanDibuat PengajuanSurat[] @relation("PemohonSurat")
+
+  pengajuanDitargetkan PengajuanSurat[] @relation("TargetSurat")
 }
 
 model JenisSurat {
@@ -142,14 +145,17 @@ model JenisSurat {
 model PengajuanSurat {
   id             Int         @id @default(autoincrement())
   pendudukId     Int
-  jenisSuratId   Int
-  status         StatusSurat @default(PENDING)
+  targetId       Int?
+  jenis          String
+  jenisSuratId   Int?
+  statusSurat         StatusSurat @default(PENDING)
   catatan        String?
   dataPermohonan Json
   fileHasil      String?
 
-  penduduk   Penduduk   @relation(fields: [pendudukId], references: [id])
-  jenisSurat JenisSurat @relation(fields: [jenisSuratId], references: [id])
+  penduduk   Penduduk    @relation("PemohonSurat", fields: [pendudukId], references: [id])
+  target     Penduduk?   @relation("TargetSurat", fields: [targetId], references: [id])
+  jenisSurat JenisSurat? @relation(fields: [jenisSuratId], references: [id])
 
   createdById Int
   createdBy   User @relation(fields: [createdById], references: [id])

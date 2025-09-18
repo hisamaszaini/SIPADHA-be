@@ -48,7 +48,7 @@ export class UsersController {
     return this.usersService.findOne(+id);
   }
 
-  @Patch(':id')
+  @Patch('profile/:id')
   @HttpCode(HttpStatus.OK)
   updateProfile(
     @Param('id') id: string, @Body() dto: UpdateProfileDto,
