@@ -302,7 +302,7 @@ export class PengajuanSuratService {
         }
       }
 
-      const { jenisSuratId, status, pendudukId: pendudukIdFromPayload, ...payload } = data;
+      const { jenisSuratId, statusSurat, pendudukId: pendudukIdFromPayload, ...payload } = data;
 
       let pendudukId = existing.pendudukId;
       if (user.role !== 'WARGA' && pendudukIdFromPayload) {
