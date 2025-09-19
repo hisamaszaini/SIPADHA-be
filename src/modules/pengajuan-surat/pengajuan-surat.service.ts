@@ -105,7 +105,7 @@ export class PengajuanSuratService {
           pendudukId,
           createdById: user.userId,
           jenis,
-          status,
+          statusSurat,
           targetId: 'targetId' in safePayload ? safePayload.targetId : null,
           dataPermohonan: safePayload,
         },
