@@ -28,7 +28,9 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ApiResponseInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.use('/uploads', express.static(join(cwd(), 'uploads')));
-  await app.listen(3000);
-  console.log('HTTP on http://localhost:3000');
+
+  const port = process.env.PORT || 3334;
+  await app.listen(port);
+  console.log(`🚀 HTTP server running on http://localhost:${port}`);
 }
 bootstrap();
