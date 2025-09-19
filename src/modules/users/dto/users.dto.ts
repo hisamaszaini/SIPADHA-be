@@ -55,7 +55,8 @@ export const updateUserSchema = z
 
 export const updateProfileSchema = z
   .object({
-    username: z.string().nonempty().trim().optional(),
+    email: z.string().nonempty().trim().optional(),
+    noHp: z.string().min(11, 'Nomor HP minimal 11 digit').max(15, 'Nomor HP Maksimal 15').trim().optional(),
     password: z.string().min(8).optional(),
     confirmPassword: z.string().optional(),
   })

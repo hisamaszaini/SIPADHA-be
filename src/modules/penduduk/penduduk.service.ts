@@ -155,6 +155,11 @@ export class PendudukService {
           select: { kartuKeluargaId: true }
         });
 
+        console.log(user);
+        console.log(`[PENDUDUK] KartuKeluargaId : ${checkKk?.kartuKeluargaId}`)
+        console.log(`[PENDUDUK] userId: ${user.userId}`);
+
+
         if (!checkKk) {
           throw new ForbiddenException('Anda tidak memiliki akses ke data penduduk');
         }

@@ -101,7 +101,9 @@ export class UsersService {
     // Username
     if (dto.username) {
       if (dto.username !== user.username) {
-        const exists = await this.prisma.user.findUnique({ where: { username: dto.username } });
+        const exists = await this.prisma.user.findUnique({
+          where: { username: dto.username },
+        });
         if (exists) throw new BadRequestException('Username sudah digunakan');
       }
       data.username = dto.username;
@@ -110,7 +112,9 @@ export class UsersService {
     // Email
     if (dto.email) {
       if (dto.email !== user.email) {
-        const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
+        const exists = await this.prisma.user.findUnique({
+          where: { email: dto.email },
+        });
         if (exists) throw new BadRequestException('Email sudah digunakan');
       }
       data.email = dto.email;
@@ -122,19 +126,30 @@ export class UsersService {
 
     // NIK hanya untuk WARGA
     if ((dto.role === 'WARGA' || user.role === 'WARGA') && dto.nik) {
-      const penduduk = await this.prisma.penduduk.findUnique({ where: { nik: dto.nik } });
-      if (!penduduk) throw new BadRequestException('NIK tidak ditemukan di data penduduk');
+      const penduduk = await this.prisma.penduduk.findUnique({
+        where: { nik: dto.nik },
+      });
+
+      if (!penduduk) {
+        throw new BadRequestException('NIK tidak ditemukan di data penduduk');
+      }
 
       if (penduduk.userId && penduduk.userId !== id) {
         throw new BadRequestException('NIK sudah terdaftar di user lain');
       }
 
-      data.nik = dto.nik;
+      // Link ke penduduk
+      await this.prisma.penduduk.update({
+        where: { nik: dto.nik },
+        data: { userId: id },
+      });
     }
 
     // Password
     if (dto.password) {
-      if (dto.password !== dto.confirmPassword) throw new BadRequestException('Password dan konfirmasi tidak cocok');
+      if (dto.password !== dto.confirmPassword) {
+        throw new BadRequestException('Password dan konfirmasi tidak cocok');
+      }
       data.password = await hash(dto.password);
     }
 
@@ -152,11 +167,23 @@ export class UsersService {
    */
   async updateProfile(id: number, dto: UpdateProfileDto) {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('User tidak ditemukan');
+    if (!user) {
+      throw new NotFoundException('User tidak ditemukan');
+    }
 
     const data: any = {};
 
-    if (dto.username) data.username = dto.username;
+    // Email
+    if (dto.email) {
+      data.email = dto.email;
+    }
+
+    // Nomor HP
+    if (dto.noHp) {
+      data.noHp = dto.noHp;
+    }
+
+    // Password
     if (dto.password) {
       if (dto.password !== dto.confirmPassword) {
         throw new BadRequestException('Password dan konfirmasi tidak cocok');
@@ -167,10 +194,15 @@ export class UsersService {
     const updated = await this.prisma.user.update({
       where: { id },
       data,
+      include: {penduduk: true}
     });
 
     const { password, refreshToken, ...userData } = updated;
-    return { message: 'Profil berhasil diperbarui', data: userData };
+
+    return {
+      message: 'Profil berhasil diperbarui',
+      data: userData,
+    };
   }
 
   async findAll(queryParams: UserFindAllQueryParams): Promise<PaginatedResult<SafeUser>> {

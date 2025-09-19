@@ -6,7 +6,7 @@ export const JenisSuratEnum = z.enum([
     'KETERANGAN_TIDAK_MAMPU_SEKOLAH',
     'KETERANGAN_PENGHASILAN',
     'KETERANGAN_SUAMI_ISTRI_KELUAR_NEGERI',
-    'PERINTAH_TUGAS']);
+    'KETERANGAN_TIDAK_MEMILIKI_MOBIL']);
 
 export const baseCreatePengajuanSuratSchema = z.object({
     // pendudukId: z.string().nonempty('Penduduk wajib dipilih !')
@@ -26,9 +26,9 @@ const keteranganUsahaFields = z.object({
     perindustrian: z.string().trim(),
     jasa: z.string().trim(),
     lain: z.string().trim(),
-    alamatUsaha: z.string(),
+    alamatUsaha: z.string().trim(),
     tahun: z.number().min(4, "Tahun harus 4 digit").refine((val) => val >= 1900 && val <= new Date().getFullYear(), {
-      message: "Tahun tidak valid",
+        message: "Tahun tidak valid",
     }),
 });
 
@@ -61,9 +61,25 @@ export const keteranganaTidakMampuSekolahSchema = z.object({
     keterangan: z.string().nonempty('Keterangan pembayaran gaji wajib diisi')
 });
 
+export const keteranganSuamiIstriKeluarNegeriSchema = z.object({
+    jenis: z.literal('KETERANGAN_SUAMI_ISTRI_KELUAR_NEGERI'),
+    targetId: z.preprocess((val) => { if (typeof val === 'string') { return val.trim() === '' ? NaN : Number(val); } return val; }, z.number('Anak wajib dipilih').int('targetId harus bilangan bulat').positive('Target wajib dipilih dan ID tidak valid'),),
+    tahun: z.number().min(4, "Tahun harus 4 digit").refine((val) => val >= 1900 && val <= new Date().getFullYear(), {
+        message: "Tahun tidak valid",
+    }),
+    negaraTujuan: z.string().nonempty('Negara tujuan wajib diisi'),
+    keterangan: z.string().nonempty('Keterangan tujuan pengajuan surat wajib diisi'),
+});
+
+export const keteranganTidakMemilikiMobilSchema = z.object({
+    jenis: z.literal('KETERANGAN_TIDAK_MEMILIKI_MOBIL')
+});
+
 export const createPengajuanSuratSchema = z.discriminatedUnion('jenis', [
     keteranganUsahaSchema,
-    keteranganaTidakMampuSekolahSchema
+    keteranganaTidakMampuSekolahSchema,
+    keteranganSuamiIstriKeluarNegeriSchema,
+    keteranganTidakMemilikiMobilSchema,
 ]);
 
 export const fullCreatePengajuanSuratSchema = createPengajuanSuratSchema.and(baseCreatePengajuanSuratSchema);

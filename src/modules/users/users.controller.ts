@@ -48,17 +48,17 @@ export class UsersController {
     return this.usersService.findOne(+id);
   }
 
-  @Patch('profile/:id')
+  @Patch('profile')
   @HttpCode(HttpStatus.OK)
   updateProfile(
-    @Param('id') id: string, @Body() dto: UpdateProfileDto,
+    @Body() dto: UpdateProfileDto,
     @Request() req,
   ) {
     if (!req.user) {
       throw new UnauthorizedException('Silahkan login terlebih dahulu');
     }
     const userId = req.user.userId;
-    return this.usersService.updateProfile(+id, dto);
+    return this.usersService.updateProfile(+userId, dto);
   }
 
   @Patch(':id')

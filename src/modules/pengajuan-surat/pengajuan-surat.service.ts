@@ -18,17 +18,50 @@ export class PengajuanSuratService {
 
       let pendudukId: number;
 
+      console.log(user);
+
       if (user.role === 'WARGA') {
         const penduduk = await this.prisma.penduduk.findUnique({
-          where: { id: user.userId },
-          select: { id: true },
+          where: { userId: user.userId },
+          select: { id: true, kartuKeluargaId: true },
         });
 
         if (!penduduk) {
           throw new ForbiddenException('Data penduduk tidak ditemukan untuk user ini');
         }
 
-        pendudukId = penduduk.id;
+        console.log(`[CREATE] USER KkId: ${penduduk.kartuKeluargaId}`)
+
+
+        // Validasi pendudukId
+        const pendudukCheck = await this.prisma.penduduk.findFirst({
+          where: {
+            id: payload.pendudukId,
+            kartuKeluargaId: penduduk.kartuKeluargaId,
+          },
+        });
+
+        console.log(`[CREATE] userId: ${user.userId}`);
+        console.log(`[CREATE] pendudukId: ${payload.pendudukId}`);
+
+        if (!pendudukCheck) {
+          throw new ForbiddenException('Penduduk yang dipilih bukan satu KK dengan user ini');
+        }
+
+        if ('targetId' in payload && payload.targetId) {
+          const targetCheck = await this.prisma.penduduk.findFirst({
+            where: {
+              id: payload.targetId,
+              kartuKeluargaId: penduduk.kartuKeluargaId,
+            },
+          });
+
+          if (!targetCheck) {
+            throw new ForbiddenException('Target bukan satu KK dengan user ini');
+          }
+        }
+
+        pendudukId = payload.pendudukId;
       } else {
         if (!payload.pendudukId) {
           throw new BadRequestException('pendudukId wajib diisi untuk role non-WARGA');
@@ -90,7 +123,7 @@ export class PengajuanSuratService {
   }
 
   async findAll(
-    user: { id: number; role: string },
+    user: { userId: number; role: string },
     queryParams: FindAllPengajuanSuratQueryParams
   ): Promise<PaginatedResult<any>> {
     try {
@@ -110,15 +143,22 @@ export class PengajuanSuratService {
       // Jika WARGA, hanya boleh lihat pengajuan miliknya
       if (user.role === 'WARGA') {
         const penduduk = await this.prisma.penduduk.findUnique({
-          where: { userId: user.id },
-          select: { id: true },
+          where: { userId: user.userId },
+          select: { kartuKeluargaId: true },
         });
 
         if (!penduduk) {
           throw new ForbiddenException('Penduduk tidak ditemukan');
         }
 
-        where.pendudukId = penduduk.id;
+        const anggotaKK = await this.prisma.penduduk.findMany({
+          where: { kartuKeluargaId: penduduk.kartuKeluargaId },
+          select: { id: true },
+        });
+
+        const pendudukIds = anggotaKK.map(a => a.id);
+
+        where.pendudukId = { in: pendudukIds };
       }
 
       // Filter statusSurat
@@ -236,14 +276,30 @@ export class PengajuanSuratService {
         );
       }
 
-      // hanya pemilik (WARGA) yang boleh update miliknya
-      if (
-        user.role === 'WARGA' &&
-        existing.penduduk.userId !== user.userId
-      ) {
-        throw new ForbiddenException(
-          'Anda tidak memiliki akses untuk mengubah pengajuan ini',
-        );
+      // WARGA hanya boleh update satu KK
+      if (user.role === 'WARGA') {
+        const pendudukLogin = await this.prisma.penduduk.findUnique({
+          where: { userId: user.userId },
+          select: { id: true, kartuKeluargaId: true },
+        });
+
+        if (!pendudukLogin) {
+          throw new ForbiddenException('Penduduk tidak ditemukan');
+        }
+
+        const pendudukPemilik = await this.prisma.penduduk.findUnique({
+          where: { id: existing.pendudukId },
+          select: { kartuKeluargaId: true },
+        });
+
+        if (
+          !pendudukPemilik ||
+          pendudukLogin.kartuKeluargaId !== pendudukPemilik.kartuKeluargaId
+        ) {
+          throw new ForbiddenException(
+            'Anda tidak memiliki akses untuk mengubah pengajuan ini',
+          );
+        }
       }
 
       const { jenisSuratId, status, pendudukId: pendudukIdFromPayload, ...payload } = data;
