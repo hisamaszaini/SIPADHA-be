@@ -322,7 +322,7 @@ export class PengajuanSuratService {
           statusSurat:
             user.role === 'WARGA'
               ? existing.statusSurat
-              : status ?? existing.statusSurat,
+              : statusSurat ?? existing.statusSurat,
           targetId:
             'targetId' in safePayload
               ? (safePayload['targetId'] as number)
