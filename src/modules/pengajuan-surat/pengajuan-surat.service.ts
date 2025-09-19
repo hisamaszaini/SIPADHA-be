@@ -14,7 +14,7 @@ export class PengajuanSuratService {
     data: fullCreatePengajuanSuratDto
   ) {
     try {
-      const { status, ...payload } = data;
+      const { statusSurat, ...payload } = data;
 
       let pendudukId: number;
 

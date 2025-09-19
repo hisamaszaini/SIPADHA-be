@@ -16,7 +16,7 @@ export const baseCreatePengajuanSuratSchema = z.object({
     // jenisSuratId: z.string().nonempty('Jenis surat wajib dipilih !')
     //     .transform((val) => Number(val))
     //     .pipe(z.number().int().positive('Jenis surat tidak valid')),
-    status: StatusSuratEnum.default('PENDING'),
+    statusSurat: StatusSuratEnum.default('PENDING'),
 });
 
 const keteranganUsahaFields = z.object({
@@ -91,5 +91,5 @@ export type UpdatePengajuanSuratDto = Partial<
 > & {
     pendudukId?: number;
     jenisSuratId?: number;
-    status?: string;
+    statusSurat?: string;
 };
