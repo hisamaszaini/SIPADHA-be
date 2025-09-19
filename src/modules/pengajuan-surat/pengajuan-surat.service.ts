@@ -319,10 +319,10 @@ export class PengajuanSuratService {
           pendudukId,
           jenis: (safePayload['jenis'] as string) ?? existing.jenis,
           jenisSuratId: jenisSuratId ?? existing.jenisSuratId,
-          status:
+          statusSurat:
             user.role === 'WARGA'
-              ? existing.status
-              : status ?? existing.status,
+              ? existing.statusSurat
+              : status ?? existing.statusSurat,
           targetId:
             'targetId' in safePayload
               ? (safePayload['targetId'] as number)
