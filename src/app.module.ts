@@ -12,6 +12,7 @@ import { PengajuanSuratModule } from './modules/pengajuan-surat/pengajuan-surat.
 import { PrismaModule } from 'prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { KartuKeluargaModule } from './modules/kartu-keluarga/kartu-keluarga.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { KartuKeluargaModule } from './modules/kartu-keluarga/kartu-keluarga.mod
     JenisSuratModule,
     PengajuanSuratModule,
     KartuKeluargaModule,
+    DashboardModule,
 
   ],
   controllers: [AppController],
