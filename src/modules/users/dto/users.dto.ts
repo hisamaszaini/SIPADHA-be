@@ -49,7 +49,7 @@ export const updateUserSchema = z
   })
   .refine(
     d => !d.password || (d.confirmPassword && d.password === d.confirmPassword),
-    { message: 'Password dan konfirmasi tidak cocok', path: ['confirmPassword'] }
+    { message: 'Password dan konfirmasi tidak cocok ya', path: ['confirmPassword'] }
   )
   .strict();
 

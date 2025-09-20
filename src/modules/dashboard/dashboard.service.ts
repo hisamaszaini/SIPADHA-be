@@ -70,6 +70,82 @@ export class DashboardService {
         }
     }
 
+    async getDashboardWarga(userId: number) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                penduduk: {
+                    include: {
+                        kartuKeluarga: {
+                            include: {
+                                kepalaKeluarga: true,
+                                anggotaKeluarga: true,
+                            },
+                        },
+                        pengajuanDibuat: true,
+                    },
+                },
+            },
+        });
+
+        if (!user || !user.penduduk) {
+            throw new Error('Penduduk tidak ditemukan untuk user ini');
+        }
+
+        const penduduk = user.penduduk;
+
+        const kk = penduduk.kartuKeluarga
+            ? {
+                nomor: penduduk.kartuKeluarga.noKk,
+                alamat: penduduk.kartuKeluarga.alamat,
+                kepalaKeluarga: penduduk.kartuKeluarga.kepalaKeluarga?.nama || null,
+                anggota: penduduk.kartuKeluarga.anggotaKeluarga.map((a) => ({
+                    nama: a.nama,
+                    hubungan: a.hubunganDalamKeluarga,
+                    usia: Math.floor(
+                        (new Date().getTime() - new Date(a.tanggalLahir).getTime()) /
+                        (1000 * 60 * 60 * 24 * 365),
+                    ),
+                })),
+            }
+            : null;
+
+        const pengajuanSummary: Record<string, number> = {};
+        penduduk.pengajuanDibuat.forEach((p) => {
+            pengajuanSummary[p.statusSurat] =
+                (pengajuanSummary[p.statusSurat] || 0) + 1;
+        });
+
+        return {
+            message: 'Dashboard warga berhasil diambil',
+            data: {
+                profil: {
+                    nama: penduduk.nama,
+                    nik: penduduk.nik,
+                    jenisKelamin: penduduk.jenisKelamin,
+                    tanggalLahir: penduduk.tanggalLahir,
+                    tempatLahir: penduduk.tempatLahir,
+                    agama: penduduk.agama,
+                    statusPerkawinan: penduduk.statusPerkawinan,
+                    pendidikan: penduduk.pendidikan,
+                    pekerjaan: penduduk.pekerjaan,
+                    kewargaan: penduduk.kewargaan,
+                },
+                kk,
+                pengajuan: {
+                    total: penduduk.pengajuanDibuat.length,
+                    perStatus: pengajuanSummary,
+                    detail: penduduk.pengajuanDibuat.map((p) => ({
+                        id: p.id,
+                        jenis: p.jenis,
+                        status: p.statusSurat,
+                        tanggal: p.createdAt,
+                    })),
+                },
+            },
+        };
+    }
+
     async getDemographicSummary() {
 
     }
