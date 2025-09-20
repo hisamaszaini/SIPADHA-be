@@ -167,10 +167,9 @@ export class RwService {
               nama: true
             }
           },
-          rts: {
+          _count: {
             select: {
-              id: true,
-              nomor: true
+              rts: true
             }
           }
         }

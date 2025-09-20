@@ -234,7 +234,15 @@ export class PengajuanSuratService {
           },
           target: true,
           jenisSurat: true,
-          createdBy: true,
+          createdBy: {
+            select: {
+              id: true,
+              noHp: true,
+              email: true,
+              username: true,
+              role: true,
+            },
+          },
         },
       });
 
@@ -255,7 +263,6 @@ export class PengajuanSuratService {
         throw error;
       }
       throw new InternalServerErrorException('Terjadi kesalahan tidak diketahui');
-
     }
   }
 
