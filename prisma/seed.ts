@@ -33,6 +33,25 @@ async function main() {
         },
     });
 
+    const setting = await prisma.setting.findFirst();
+
+    if (!setting) {
+        await prisma.setting.create({
+            data: {
+                namaKepdes: "Nama Default",
+                nikKepdes: "3509010101010001",
+                jenisKelaminKepdes: "Laki-laki",
+                alamatKepdes: "Jl. Raya Desa",
+                tempatLahirKepdes: "Ponorogo",
+                tanggalLahirKepdes: new Date("1970-01-01"),
+                endPointWa: "http://localhost:3000/api/wa",
+            },
+        });
+        console.log("✅ Default Setting berhasil dibuat");
+    } else {
+        console.log("⚠️ Setting sudah ada, skip seeding");
+    }
+
     await prisma.dukuh.create({
         data: {
             nama: 'Jati',

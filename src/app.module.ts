@@ -13,6 +13,7 @@ import { PrismaModule } from 'prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { KartuKeluargaModule } from './modules/kartu-keluarga/kartu-keluarga.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { SettingModule } from './modules/setting/setting.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     PengajuanSuratModule,
     KartuKeluargaModule,
     DashboardModule,
+    SettingModule,
 
   ],
   controllers: [AppController],

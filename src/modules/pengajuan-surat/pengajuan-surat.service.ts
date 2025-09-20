@@ -214,37 +214,46 @@ export class PengajuanSuratService {
 
   async findOne(id: number, user: { userId: number; role: string }) {
     try {
-      const pengajuan = await this.prisma.pengajuanSurat.findUnique({
-        where: { id },
-        include: {
-          penduduk: {
-            include: {
-              kartuKeluarga: {
-                include: {
-                  rt: {
-                    include: {
-                      rw: {
-                        include: { dukuh: true },
+      const [pengajuan, setting] = await Promise.all([
+        this.prisma.pengajuanSurat.findUnique({
+          where: { id },
+          include: {
+            penduduk: {
+              include: {
+                kartuKeluarga: {
+                  include: {
+                    rt: {
+                      include: {
+                        rw: {
+                          include: { dukuh: true },
+                        }
                       }
                     }
                   }
                 }
               }
-            }
-          },
-          target: true,
-          jenisSurat: true,
-          createdBy: {
-            select: {
-              id: true,
-              noHp: true,
-              email: true,
-              username: true,
-              role: true,
+            },
+            target: true,
+            jenisSurat: true,
+            createdBy: {
+              select: {
+                id: true,
+                noHp: true,
+                email: true,
+                username: true,
+                role: true,
+              },
             },
           },
-        },
-      });
+        }),
+        this.prisma.setting.findFirst({
+          select: {
+            namaKepdes: true,
+            nikKepdes: true,
+            alamatKepdes: true,
+          },
+        }),
+      ]);
 
       if (!pengajuan) {
         throw new NotFoundException(
@@ -255,7 +264,7 @@ export class PengajuanSuratService {
       return {
         success: true,
         message: "Detail pengajuan surat berhasil ditemukan",
-        data: pengajuan,
+        data: { ...pengajuan, setting },
       };
     } catch (error) {
       console.error("Gagal mengambil detail pengajuan surat:", error);

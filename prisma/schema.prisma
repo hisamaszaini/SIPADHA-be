@@ -32,6 +32,17 @@ enum StatusUser {
   INACTIVE
 }
 
+model Setting {
+  id                 Int      @id @default(autoincrement())
+  namaKepdes         String
+  nikKepdes          String
+  jenisKelaminKepdes String
+  alamatKepdes       String
+  tempatLahirKepdes  String
+  tanggalLahirKepdes DateTime
+  endPointWa         String
+}
+
 model User {
   id           Int        @id @default(autoincrement())
   noHp         String
@@ -115,6 +126,7 @@ model Penduduk {
   statusPerkawinan      String
   pendidikan            String?
   pekerjaan             String?
+  kewargaan             String   @default("WNI")
   hubunganDalamKeluarga String
 
   kartuKeluargaId Int
@@ -148,7 +160,7 @@ model PengajuanSurat {
   targetId       Int?
   jenis          String
   jenisSuratId   Int?
-  statusSurat         StatusSurat @default(PENDING)
+  statusSurat    StatusSurat @default(PENDING)
   catatan        String?
   dataPermohonan Json
   fileHasil      String?
