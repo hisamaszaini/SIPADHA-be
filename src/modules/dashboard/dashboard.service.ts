@@ -116,6 +116,7 @@ export class DashboardService {
             where: { pendudukId: { in: anggotaKKIds } },
             include: { penduduk: { select: { nama: true } } },
             orderBy: { createdAt: 'desc' },
+            take: 5
         });
 
         const pengajuanSummary: Record<string, number> = {};
