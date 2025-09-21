@@ -11,6 +11,11 @@ export const JenisSuratEnum = z.enum([
     'KETERANGAN_DOMISILI'
 ]);
 
+export const LingkupSuratEnum = z.enum([
+    'DESA',
+    'KOTA'
+]);
+
 export const baseCreatePengajuanSuratSchema = z.object({
     // pendudukId: z.string().nonempty('Penduduk wajib dipilih !')
     //     .transform((val) => Number(val))
@@ -20,6 +25,7 @@ export const baseCreatePengajuanSuratSchema = z.object({
     //     .transform((val) => Number(val))
     //     .pipe(z.number().int().positive('Jenis surat tidak valid')),
     statusSurat: StatusSuratEnum.default('PENDING'),
+    lingkup: LingkupSuratEnum.refine( (val) => !!val, { message: "Lingkup wajib dipilih" } ),
 });
 
 const keteranganUsahaFields = z.object({

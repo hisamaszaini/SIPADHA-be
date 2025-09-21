@@ -5,6 +5,7 @@ import { User } from '../auth/auth.types';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { ZodValidationPipe } from 'nestjs-zod';
+import { StatusSurat } from '@prisma/client';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('pengajuan-surat')
@@ -49,6 +50,7 @@ export class PengajuanSuratController {
     @Query('page') page: string,
     @Query('limit') limit: string,
     @Query('search') search: string,
+    @Query('statusSurat') statusSurat: StatusSurat,
     @Query('sortBy') sortBy: string,
     @Query('sortOrder') sortOrder: 'asc' | 'desc'
   ) {
@@ -57,6 +59,7 @@ export class PengajuanSuratController {
       page: page ? parseInt(page) : undefined,
       limit: limit ? parseInt(limit) : undefined,
       search,
+      statusSurat,
       sortBy,
       sortOrder
     };

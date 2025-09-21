@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, HttpException, Injectable, Int
 import { fullCreatePengajuanSuratDto, UpdatePengajuanSuratDto, UpdateStatusSuratDto } from './dto/pengajuan-surat.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { FindAllPengajuanSuratQueryParams, jenisSuratOptions } from './pengajuan-surat.types';
-import { Prisma } from '@prisma/client';
+import { Prisma, StatusSurat } from '@prisma/client';
 import { KartuKeluarga } from '../kartu-keluarga/entities/kartu-keluarga.entity';
 import { sendTextMessage } from '@/common/utils/wa';
 
@@ -164,14 +164,21 @@ export class PengajuanSuratService {
 
       // Filter statusSurat
       if (statusSurat) {
-        where.statusSurat = statusSurat;
+        where.statusSurat = statusSurat as StatusSurat;
       }
 
       // Search (jenis, nama penduduk pemohon, nama target)
       if (search) {
         where.OR = [
           { jenis: { contains: search, mode: 'insensitive' } },
-          { penduduk: { nama: { contains: search, mode: 'insensitive' } } },
+          {
+            penduduk: {
+              OR: [
+                { nama: { contains: search, mode: 'insensitive' } },
+                { nik: { contains: search, mode: 'insensitive' } },
+              ],
+            },
+          },
           { target: { nama: { contains: search, mode: 'insensitive' } } },
         ];
       }
@@ -273,7 +280,6 @@ export class PengajuanSuratService {
       throw new InternalServerErrorException('Terjadi kesalahan tidak diketahui');
     }
   }
-
 
   async update(
     id: number,

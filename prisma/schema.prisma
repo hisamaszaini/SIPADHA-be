@@ -179,4 +179,7 @@ model PengajuanSurat {
   processAt     DateTime?
   processEnd    DateTime?
   updatedAt     DateTime  @updatedAt
+
+  @@index([statusSurat])
+  @@index([createdAt])
 }

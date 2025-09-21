@@ -7,6 +7,13 @@ export class DashboardService {
 
     async getDashboardSummary() {
         try {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            // user & kk
             const countUser = await this.prisma.user.count();
             const countKk = await this.prisma.kartuKeluarga.count();
 
@@ -21,32 +28,48 @@ export class DashboardService {
                 return acc;
             }, {} as Record<string, number>);
 
-
-            // pengajuan per status + jenis
+            // pengajuan total (semua waktu)
             const countPengajuanRaw = await this.prisma.pengajuanSurat.groupBy({
                 by: ['statusSurat', 'jenis'],
                 _count: { _all: true },
             });
-
-            // mapping ke bentuk lebih rapi
             const countPengajuan = countPengajuanRaw.map((row) => ({
                 status: row.statusSurat,
                 jenis: row.jenis,
                 total: row._count._all,
             }));
 
-            // agregasi untuk distribusi status
+            // distribusi status total
             const distribusiStatus: Record<string, number> = {};
             countPengajuan.forEach((row) => {
                 distribusiStatus[row.status] =
                     (distribusiStatus[row.status] || 0) + row.total;
             });
 
-            // agregasi untuk jenis surat populer
+            // distribusi jenis total
             const distribusiJenis: Record<string, number> = {};
             countPengajuan.forEach((row) => {
                 distribusiJenis[row.jenis] =
                     (distribusiJenis[row.jenis] || 0) + row.total;
+            });
+
+            // pengajuan hari ini
+            const pengajuanHariIni = await this.prisma.pengajuanSurat.count({
+                where: {
+                    createdAt: {
+                        gte: today,
+                    },
+                },
+            });
+
+            // pengajuan kemarin
+            const pengajuanKemarin = await this.prisma.pengajuanSurat.count({
+                where: {
+                    createdAt: {
+                        gte: yesterday,
+                        lt: today,
+                    },
+                },
             });
 
             return {
@@ -62,6 +85,10 @@ export class DashboardService {
                         distribusiStatus,
                         distribusiJenis,
                         detail: countPengajuan,
+                        perbandingan: {
+                            hariIni: pengajuanHariIni,
+                            kemarin: pengajuanKemarin,
+                        },
                     },
                 },
             };
