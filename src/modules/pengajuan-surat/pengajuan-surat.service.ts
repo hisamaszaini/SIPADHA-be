@@ -1,9 +1,10 @@
 import { BadRequestException, ForbiddenException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { fullCreatePengajuanSuratDto, UpdatePengajuanSuratDto, UpdateStatusSuratDto } from './dto/pengajuan-surat.dto';
 import { PrismaService } from 'prisma/prisma.service';
-import { FindAllPengajuanSuratQueryParams } from './pengajuan-surat.types';
+import { FindAllPengajuanSuratQueryParams, jenisSuratOptions } from './pengajuan-surat.types';
 import { Prisma } from '@prisma/client';
 import { KartuKeluarga } from '../kartu-keluarga/entities/kartu-keluarga.entity';
+import { sendTextMessage } from '@/common/utils/wa';
 
 @Injectable()
 export class PengajuanSuratService {
@@ -373,15 +374,28 @@ export class PengajuanSuratService {
     data: UpdateStatusSuratDto,
   ) {
     try {
-      const surat = await this.prisma.pengajuanSurat.findUnique({ where: { id } });
+      const surat = await this.prisma.pengajuanSurat.findUnique({
+        where: { id },
+        include: {
+          penduduk: {
+            include: {
+              user: true,
+              kartuKeluarga: {
+                include: {
+                  anggotaKeluarga: { include: { user: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+
       if (!surat) throw new NotFoundException('Surat tidak ditemukan');
 
       const updateData: Prisma.PengajuanSuratUpdateInput = {
         statusSurat: data.statusSurat,
         catatan: data.catatan ?? null,
-        validatedBy: {
-          connect: { id: user.userId },
-        },
+        validatedBy: { connect: { id: user.userId } },
       };
 
       if (data.statusSurat === 'DIPROSES') {
@@ -395,15 +409,64 @@ export class PengajuanSuratService {
         data: updateData,
       });
 
+      let noHp: string | null = null;
+
+      if (surat?.penduduk?.user?.noHp) {
+        noHp = surat.penduduk.user.noHp;
+      } else if (surat?.penduduk?.kartuKeluarga?.anggotaKeluarga?.length) {
+        const anggotaDenganUser = surat.penduduk.kartuKeluarga.anggotaKeluarga.find(
+          (a) => a.userId && a.user?.noHp
+        );
+        if (anggotaDenganUser) noHp = anggotaDenganUser.user!.noHp;
+      }
+
+      // Kirim notifikasi WA
+      const jenisSuratLabel =
+        jenisSuratOptions.find((j) => j.value === surat.jenis)?.label || surat.jenis;
+
+      const namaPenduduk = surat.penduduk.nama || '';
+      const sapaan =
+        surat.penduduk.jenisKelamin === 'Laki-laki' ? 'Bapak' :
+          surat.penduduk.jenisKelamin === 'Perempuan' ? 'Ibu' :
+            'Bapak/Ibu';
+
+      const jam = new Date().getHours();
+      let salam = 'Selamat Pagi';
+      if (jam >= 11 && jam < 15) {
+        salam = 'Selamat Siang';
+      } else if (jam >= 15 && jam < 18) {
+        salam = 'Selamat Sore';
+      } else if (jam >= 18 || jam < 4) {
+        salam = 'Selamat Malam';
+      }
+
+      if (noHp) {
+        if (data.statusSurat === 'DITOLAK') {
+          await sendTextMessage(
+            noHp,
+            `${salam} ${sapaan} ${namaPenduduk},\n\n` +
+            `Pengajuan ${jenisSuratLabel} Anda *ditolak* oleh pihak desa.` +
+            `\nAlasan: ${data.catatan ?? '-'}` +
+            `\n\nSilakan mengajukan kembali jika diperlukan.`
+          );
+        } else if (data.statusSurat === 'SELESAI') {
+          await sendTextMessage(
+            noHp,
+            `${salam} ${sapaan} ${namaPenduduk},\n\n` +
+            `Pengajuan ${jenisSuratLabel} Anda telah *selesai diproses*.` +
+            `\nSilakan mengambil surat secara langsung di kantor desa, karena terdapat *tanda tangan basah* dari Kepala Desa.` +
+            `\n\nTerima kasih atas perhatian Anda.`
+          );
+        }
+      }
+
       return {
         success: true,
         message: `Surat berhasil diperbarui menjadi ${data.statusSurat}`,
         data: updated,
       };
-    } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
-        throw error;
-      }
+    } catch (error: any) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) throw error;
       throw new BadRequestException(error.message || 'Terjadi kesalahan saat memvalidasi surat');
     }
   }
