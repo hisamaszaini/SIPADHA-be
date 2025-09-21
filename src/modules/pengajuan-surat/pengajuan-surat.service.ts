@@ -223,13 +223,7 @@ export class PengajuanSuratService {
               include: {
                 kartuKeluarga: {
                   include: {
-                    rt: {
-                      include: {
-                        rw: {
-                          include: { dukuh: true },
-                        }
-                      }
-                    }
+                    rt: { include: { rw: { include: { dukuh: true } } } }
                   }
                 }
               }
@@ -237,29 +231,33 @@ export class PengajuanSuratService {
             target: true,
             jenisSurat: true,
             createdBy: {
-              select: {
-                id: true,
-                noHp: true,
-                email: true,
-                username: true,
-                role: true,
-              },
+              select: { id: true, noHp: true, email: true, username: true, role: true },
             },
           },
         }),
         this.prisma.setting.findFirst({
-          select: {
-            namaKepdes: true,
-            nikKepdes: true,
-            alamatKepdes: true,
-          },
+          select: { namaKepdes: true, nikKepdes: true, alamatKepdes: true },
         }),
       ]);
 
       if (!pengajuan) {
-        throw new NotFoundException(
-          `Pengajuan surat dengan ID ${id} tidak ditemukan`,
-        );
+        throw new NotFoundException(`Pengajuan surat dengan ID ${id} tidak ditemukan`);
+      }
+
+      // Batasi akses jika role WARGA
+      if (user.role === 'WARGA') {
+        const pendudukUser = await this.prisma.penduduk.findUnique({
+          where: { userId: user.userId },
+          select: { kartuKeluargaId: true },
+        });
+
+        if (!pendudukUser) {
+          throw new ForbiddenException('Penduduk tidak ditemukan');
+        }
+
+        if (pengajuan.penduduk.kartuKeluargaId !== pendudukUser.kartuKeluargaId) {
+          throw new ForbiddenException('Anda tidak memiliki akses ke pengajuan ini');
+        }
       }
 
       return {
@@ -269,12 +267,13 @@ export class PengajuanSuratService {
       };
     } catch (error) {
       console.error("Gagal mengambil detail pengajuan surat:", error);
-      if (error instanceof NotFoundException) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
         throw error;
       }
       throw new InternalServerErrorException('Terjadi kesalahan tidak diketahui');
     }
   }
+
 
   async update(
     id: number,

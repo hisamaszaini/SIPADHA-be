@@ -82,7 +82,6 @@ export class DashboardService {
                                 anggotaKeluarga: true,
                             },
                         },
-                        pengajuanDibuat: true,
                     },
                 },
             },
@@ -110,10 +109,18 @@ export class DashboardService {
             }
             : null;
 
+        // Ambil semua anggota KK
+        const anggotaKKIds = [penduduk.id, ...penduduk.kartuKeluarga?.anggotaKeluarga.map(a => a.id) || []];
+
+        const pengajuanDariKK = await this.prisma.pengajuanSurat.findMany({
+            where: { pendudukId: { in: anggotaKKIds } },
+            include: { penduduk: { select: { nama: true } } },
+            orderBy: { createdAt: 'desc' },
+        });
+
         const pengajuanSummary: Record<string, number> = {};
-        penduduk.pengajuanDibuat.forEach((p) => {
-            pengajuanSummary[p.statusSurat] =
-                (pengajuanSummary[p.statusSurat] || 0) + 1;
+        pengajuanDariKK.forEach((p) => {
+            pengajuanSummary[p.statusSurat] = (pengajuanSummary[p.statusSurat] || 0) + 1;
         });
 
         return {
@@ -133,13 +140,14 @@ export class DashboardService {
                 },
                 kk,
                 pengajuan: {
-                    total: penduduk.pengajuanDibuat.length,
+                    total: pengajuanDariKK.length,
                     perStatus: pengajuanSummary,
-                    detail: penduduk.pengajuanDibuat.map((p) => ({
+                    detail: pengajuanDariKK.map((p) => ({
                         id: p.id,
                         jenis: p.jenis,
                         status: p.statusSurat,
                         tanggal: p.createdAt,
+                        dibuatOleh: p.penduduk.nama,
                     })),
                 },
             },
