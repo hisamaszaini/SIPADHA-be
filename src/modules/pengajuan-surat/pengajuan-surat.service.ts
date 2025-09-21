@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { fullCreatePengajuanSuratDto, UpdatePengajuanSuratDto } from './dto/pengajuan-surat.dto';
+import { fullCreatePengajuanSuratDto, UpdatePengajuanSuratDto, UpdateStatusSuratDto } from './dto/pengajuan-surat.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { FindAllPengajuanSuratQueryParams } from './pengajuan-surat.types';
 import { Prisma } from '@prisma/client';
@@ -364,6 +364,47 @@ export class PengajuanSuratService {
         : new InternalServerErrorException(
           'Terjadi kesalahan saat memperbarui pengajuan surat',
         );
+    }
+  }
+
+  async validate(
+    id: number,
+    user: { userId: number; role: string },
+    data: UpdateStatusSuratDto,
+  ) {
+    try {
+      const surat = await this.prisma.pengajuanSurat.findUnique({ where: { id } });
+      if (!surat) throw new NotFoundException('Surat tidak ditemukan');
+
+      const updateData: Prisma.PengajuanSuratUpdateInput = {
+        statusSurat: data.statusSurat,
+        catatan: data.catatan ?? null,
+        validatedBy: {
+          connect: { id: user.userId },
+        },
+      };
+
+      if (data.statusSurat === 'DIPROSES') {
+        updateData.processAt = new Date();
+      } else {
+        updateData.processEnd = new Date();
+      }
+
+      const updated = await this.prisma.pengajuanSurat.update({
+        where: { id },
+        data: updateData,
+      });
+
+      return {
+        success: true,
+        message: `Surat berhasil diperbarui menjadi ${data.statusSurat}`,
+        data: updated,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new BadRequestException(error.message || 'Terjadi kesalahan saat memvalidasi surat');
     }
   }
 

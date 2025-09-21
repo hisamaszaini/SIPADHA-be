@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Request, UseGuards, Query, BadRequestException, UsePipes } from '@nestjs/common';
 import { PengajuanSuratService } from './pengajuan-surat.service';
-import { fullCreatePengajuanSuratDto, fullCreatePengajuanSuratSchema, UpdatePengajuanSuratDto } from './dto/pengajuan-surat.dto';
+import { fullCreatePengajuanSuratDto, fullCreatePengajuanSuratSchema, UpdatePengajuanSuratDto, UpdateStatusSuratDto, updateStatusSuratSchema } from './dto/pengajuan-surat.dto';
 import { User } from '../auth/auth.types';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -63,9 +63,27 @@ export class PengajuanSuratController {
     return this.pengajuanSuratService.findAll(user, queryParams);
   }
 
+  @Patch(':id/validasi')
+  @HttpCode(HttpStatus.OK)
+  async validate(
+    @Param('id') id: string,
+    @Request() req,
+    @Body() data: UpdateStatusSuratDto,
+  ) {
+    const parsed = updateStatusSuratSchema.safeParse(data);
+    if (!parsed.success) {
+      const formattedErrors = parsed.error.flatten();
+      throw new BadRequestException({
+        message: 'Data yang dikirim tidak valid',
+        errors: formattedErrors.fieldErrors,
+      });
+    }
+    const user = req.user;
+    return this.pengajuanSuratService.validate(+id, user, parsed.data);
+  }
+
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  // @UsePipes(new ZodValidationPipe(fullCreatePengajuanSuratSchema))
   update(
     @Param('id') id: string,
     @Request() req,

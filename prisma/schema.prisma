@@ -56,8 +56,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  penduduk       Penduduk?
-  PengajuanSurat PengajuanSurat[]
+  penduduk Penduduk?
+
+  createdSurats   PengajuanSurat[] @relation("CreatedSurat")
+  validatedSurats PengajuanSurat[] @relation("ValidatorSurat")
 }
 
 model Dukuh {
@@ -169,11 +171,12 @@ model PengajuanSurat {
   target     Penduduk?   @relation("TargetSurat", fields: [targetId], references: [id])
   jenisSurat JenisSurat? @relation(fields: [jenisSuratId], references: [id])
 
-  createdById Int
-  createdBy   User @relation(fields: [createdById], references: [id])
-
-  createdAt  DateTime  @default(now())
-  processAt  DateTime?
-  processEnd DateTime?
-  updatedAt  DateTime  @updatedAt
+  createdById   Int
+  createdBy     User      @relation("CreatedSurat", fields: [createdById], references: [id])
+  createdAt     DateTime  @default(now())
+  validatedById Int?
+  validatedBy   User?     @relation("ValidatorSurat", fields: [validatedById], references: [id])
+  processAt     DateTime?
+  processEnd    DateTime?
+  updatedAt     DateTime  @updatedAt
 }

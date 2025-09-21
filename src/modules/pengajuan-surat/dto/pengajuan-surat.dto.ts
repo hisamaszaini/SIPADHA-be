@@ -105,6 +105,25 @@ export const fullCreatePengajuanSuratSchema = createPengajuanSuratSchema;
 
 export type fullCreatePengajuanSuratDto = z.infer<typeof fullCreatePengajuanSuratSchema>;
 
+export const updateStatusSuratSchema = z.object({
+    statusSurat: StatusSuratEnum,
+    catatan: z
+        .string()
+        .max(255)
+        .trim()
+        .optional()
+}).superRefine((val, ctx) => {
+    if (val.statusSurat === 'DITOLAK' && !val.catatan?.trim()) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['catatan'],
+            message: 'Catatan wajib diisi jika status ditolak',
+        });
+    }
+});
+
+export type UpdateStatusSuratDto = z.infer<typeof updateStatusSuratSchema>;
+
 export type UpdatePengajuanSuratDto = Partial<
     fullCreatePengajuanSuratDto
 > & {
