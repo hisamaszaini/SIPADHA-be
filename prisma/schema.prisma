@@ -84,6 +84,8 @@ model Rw {
 
   rts           Rt[]
   KartuKeluarga KartuKeluarga[]
+
+  @@unique([nomor, dukuhId])
 }
 
 model Rt {
@@ -95,6 +97,8 @@ model Rt {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   KartuKeluarga KartuKeluarga[]
+
+  @@unique([nomor, rwId])
 }
 
 model KartuKeluarga {

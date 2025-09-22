@@ -1,11 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Query, UseInterceptors, UploadedFile, BadRequestException, UseGuards } from '@nestjs/common';
 import { KartuKeluargaService } from './kartu-keluarga.service';
 import { CreateKartuKeluargaWithPendudukDto, CreateKkFromExistingPendudukDto, updateKartuKeluargaWithPendudukDto } from './dto/kartu-keluarga.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as XLSX from 'xlsx';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '@/common/decorators/roles.decorator';
 
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('kartu-keluarga')
 export class KartuKeluargaController {
   constructor(private readonly kartuKeluargaService: KartuKeluargaService) { }
 
+  @Roles('ADMIN', 'PENGURUS')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreateKartuKeluargaWithPendudukDto | CreateKkFromExistingPendudukDto) {
@@ -56,13 +63,45 @@ export class KartuKeluargaController {
     return this.kartuKeluargaService.findAll(queryParams);
   }
 
+  @Roles('ADMIN', 'PENGURUS')
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: updateKartuKeluargaWithPendudukDto) {
     return this.kartuKeluargaService.update(+id, dto);
   }
 
+  @Roles('ADMIN', 'PENGURUS')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.kartuKeluargaService.remove(+id);
+  }
+
+  @Roles('ADMIN', 'PENGURUS')
+  @Post('import')
+  @UseInterceptors(FileInterceptor('file'))
+  async importExcel(
+    @UploadedFile() file: Express.Multer.File,
+    @Query('dukuhId') dukuhId: string,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File Excel tidak ditemukan');
+    }
+
+    if (!dukuhId) {
+      throw new BadRequestException('Parameter dukuhId wajib diisi');
+    }
+
+    // Parse Excel
+    const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(sheet);
+
+    // Panggil service import
+    const result = await this.kartuKeluargaService.importKartuKeluargaFromExcel(
+      data as any[],
+      Number(dukuhId),
+    );
+
+    return result;
   }
 }

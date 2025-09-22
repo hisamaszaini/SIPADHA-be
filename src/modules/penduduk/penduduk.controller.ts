@@ -18,12 +18,14 @@ import { PendudukService } from './penduduk.service';
 import { CreatePendudukDto, UpdatePendudukDto, createPendudukSchema, updatePendudukSchema } from './dto/penduduk.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '@/common/decorators/roles.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('penduduk')
 export class PendudukController {
   constructor(private readonly pendudukService: PendudukService) { }
 
+  @Roles('ADMIN', 'PENGURUS')
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: CreatePendudukDto) {
@@ -93,6 +95,7 @@ export class PendudukController {
     return this.pendudukService.findAll(queryParams, user);
   }
 
+  @Roles('ADMIN', 'PENGURUS')
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   update(@Param('id') id: string, @Body() dto: UpdatePendudukDto) {
@@ -108,6 +111,7 @@ export class PendudukController {
     return this.pendudukService.update(+id, data);
   }
 
+  @Roles('ADMIN', 'PENGURUS')
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
   remove(@Param('id') id: string) {

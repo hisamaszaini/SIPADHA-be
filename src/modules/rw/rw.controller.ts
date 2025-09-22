@@ -14,7 +14,6 @@ import {
 } from '@nestjs/common';
 import { RwService } from './rw.service';
 import { CreateRwDto, UpdateRwDto, createRwSchema, updateRwSchema } from './dto/rw.dto';
-import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '@/common/decorators/roles.decorator';
@@ -26,7 +25,6 @@ export class RwController {
 
   @Post()
   @Roles('ADMIN', 'PENGURUS')
-  // @UsePipes(new ZodValidationPipe(createRwSchema))
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createRwDto: CreateRwDto) {
     return this.rwService.create(createRwDto);
@@ -62,7 +60,6 @@ export class RwController {
 
   @Patch(':id')
   @Roles('ADMIN', 'PENGURUS')
-  // @UsePipes(new ZodValidationPipe(updateRwSchema))
   @HttpCode(HttpStatus.OK)
   update(@Param('id') id: string, @Body() updateRwDto: UpdateRwDto) {
     return this.rwService.update(+id, updateRwDto);
