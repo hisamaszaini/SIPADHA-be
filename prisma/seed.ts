@@ -54,25 +54,41 @@ async function main() {
         console.log("⚠️ Setting sudah ada, skip seeding");
     }
 
-    await prisma.dukuh.create({
-        data: {
-            nama: 'Jati',
-        }
-    });
+    // Cek atau buat Dukuh
+    let dukuh = await prisma.dukuh.findFirst({ where: { nama: "Jati" } });
+    if (!dukuh) {
+        dukuh = await prisma.dukuh.create({
+            data: { nama: "Jati" },
+        });
+    }
 
-    await prisma.rw.create({
-        data: {
-            nomor: "01",
-            dukuhId: 1,
-        }
+    // Cek atau buat RW
+    let rw = await prisma.rw.findFirst({
+        where: { nomor: "01", dukuhId: dukuh.id }
     });
+    if (!rw) {
+        rw = await prisma.rw.create({
+            data: {
+                nomor: "01",
+                dukuhId: dukuh.id,
+            },
+        });
+    }
 
-    await prisma.rt.create({
-        data: {
-            nomor: "01",
-            rwId: 1,
-        }
+    // Cek atau buat RT
+    let rt = await prisma.rt.findFirst({
+        where: { nomor: "01", rwId: rw.id }
     });
+    if (!rt) {
+        rt = await prisma.rt.create({
+            data: {
+                nomor: "01",
+                rwId: rw.id,
+            },
+        });
+    }
+
+    console.log("Dukuh, RW, RT siap:", dukuh.id, rw.id, rt.id);
 
     const jenisSurat = [
         {
@@ -116,7 +132,13 @@ async function main() {
             deskripsi: "Surat keterangan domisili tempat tinggal.",
             deletable: false,
             templateFile: "domisili.docx",
-        },
+        }, {
+            kode: "KETERANGAN_AHLI_WARIS",
+            namaSurat: "Surat Keterangan Ahli Waris",
+            deskripsi: "Surat keterangan terkait ahli waris / almarhum.",
+            deletable: false,
+            templateFile: "ahli_waris.docx",
+        }
     ];
 
     for (const surat of jenisSurat) {
