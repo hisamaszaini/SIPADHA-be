@@ -8,7 +8,8 @@ export const JenisSuratEnum = z.enum([
     'KETERANGAN_SUAMI_ISTRI_KELUAR_NEGERI',
     'KETERANGAN_TIDAK_MEMILIKI_MOBIL',
     'KETERANGAN_PROFESI',
-    'KETERANGAN_DOMISILI'
+    'KETERANGAN_DOMISILI',
+    'KETERANGAN_AHLI_WARIS'
 ]);
 
 export const LingkupSuratEnum = z.enum([
@@ -96,13 +97,23 @@ export const keteranganDomisiliSchema = baseCreatePengajuanSuratSchema
         keterangan: z.string().nonempty('Keterangan tujuan pengajuan surat wajib diisi'),
     });
 
+export const keteranganAhliWarisSchema = baseCreatePengajuanSuratSchema
+    .extend({
+        jenis: z.literal('KETERANGAN_AHLI_WARIS'),
+        targetId: z.preprocess((val) => { if (typeof val === 'string') { return val.trim() === '' ? NaN : Number(val); } return val; }, z.number('Anak wajib dipilih').int('targetId harus bilangan bulat').positive('Target wajib dipilih dan ID tidak valid'),),
+        hubungan: z.string().nonempty('Status hubungan wajib diisi'),
+        alamatTerakhir: z.string().nonempty('Alamat terakhir').optional(),
+        keterangan: z.string().nonempty('Keterangan pengajuan surat wajib diisi')
+    });
+
 export const createPengajuanSuratSchema = z.discriminatedUnion('jenis', [
     keteranganUsahaSchema,
     keteranganaTidakMampuSekolahSchema,
     keteranganSuamiIstriKeluarNegeriSchema,
     keteranganTidakMemilikiMobilSchema,
     keteranganProfesiSchema,
-    keteranganDomisiliSchema
+    keteranganDomisiliSchema,
+    keteranganAhliWarisSchema
 ]);
 
 export const fullCreatePengajuanSuratSchema = createPengajuanSuratSchema;
