@@ -100,9 +100,12 @@ export const keteranganDomisiliSchema = baseCreatePengajuanSuratSchema
 export const keteranganAhliWarisSchema = baseCreatePengajuanSuratSchema
     .extend({
         jenis: z.literal('KETERANGAN_AHLI_WARIS'),
-        targetId: z.preprocess((val) => { if (typeof val === 'string') { return val.trim() === '' ? NaN : Number(val); } return val; }, z.number('Anak wajib dipilih').int('targetId harus bilangan bulat').positive('Target wajib dipilih dan ID tidak valid'),),
+        namaAhli: z.string().nonempty('Nama ahli waris wajib diisi'),
+        tempatLahir: z.string().nonempty("Tempat lahir ahli waris wajib diisi"),
+        tanggalLahir: z.coerce.date('Tanggal lahir wajib diisi'),
+        jenisKelamin: z.enum(['Laki-laki', 'Perempuan']),
         hubungan: z.string().nonempty('Status hubungan wajib diisi'),
-        alamatTerakhir: z.string().optional(),
+        alamat: z.string().nonempty("Alamat ahli waris wajib diisi"),
         keterangan: z.string().nonempty('Keterangan pengajuan surat wajib diisi')
     });
 

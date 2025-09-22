@@ -138,7 +138,7 @@ async function main() {
             deskripsi: "Surat keterangan terkait ahli waris / almarhum.",
             deletable: false,
             templateFile: "ahli_waris.docx",
-        }
+        }, 
     ];
 
     for (const surat of jenisSurat) {
