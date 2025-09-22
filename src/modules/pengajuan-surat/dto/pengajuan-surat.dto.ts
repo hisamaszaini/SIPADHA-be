@@ -102,7 +102,7 @@ export const keteranganAhliWarisSchema = baseCreatePengajuanSuratSchema
         jenis: z.literal('KETERANGAN_AHLI_WARIS'),
         targetId: z.preprocess((val) => { if (typeof val === 'string') { return val.trim() === '' ? NaN : Number(val); } return val; }, z.number('Anak wajib dipilih').int('targetId harus bilangan bulat').positive('Target wajib dipilih dan ID tidak valid'),),
         hubungan: z.string().nonempty('Status hubungan wajib diisi'),
-        alamatTerakhir: z.string().nonempty('Alamat terakhir').optional(),
+        alamatTerakhir: z.string().optional(),
         keterangan: z.string().nonempty('Keterangan pengajuan surat wajib diisi')
     });
 
