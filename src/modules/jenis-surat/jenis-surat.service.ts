@@ -4,6 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
   InternalServerErrorException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { CreateJenisSuratDto, UpdateJenisSuratDto } from './dto/jenis-surat.dto';
 import { PrismaService } from 'prisma/prisma.service';
@@ -167,11 +168,15 @@ export class JenisSuratService {
     }
   }
 
-
   async remove(id: number) {
     try {
-      const exists = await this.prisma.jenisSurat.findUnique({ where: { id } });
+      const exists = await this.prisma.jenisSurat.findUnique({
+        where: { id },
+        select: { deletable: true, templateFile: true },
+      });
+
       if (!exists) throw new NotFoundException('Jenis surat tidak ditemukan');
+      if (!exists.deletable) throw new ForbiddenException('Jenis surat tidak diizinkan dihapus!');
 
       if (exists.templateFile) {
         await deleteFileFromDisk(exists.templateFile);
@@ -180,10 +185,13 @@ export class JenisSuratService {
       await this.prisma.jenisSurat.delete({ where: { id } });
 
       return {
+        success: true,
         message: 'Jenis surat berhasil dihapus',
       };
     } catch (error) {
-      if (error instanceof NotFoundException) throw error;
+      if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+        throw error;
+      }
       throw new InternalServerErrorException('Gagal menghapus jenis surat');
     }
   }

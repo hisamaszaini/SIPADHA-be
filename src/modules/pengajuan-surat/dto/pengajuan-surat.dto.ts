@@ -20,12 +20,10 @@ export const baseCreatePengajuanSuratSchema = z.object({
     // pendudukId: z.string().nonempty('Penduduk wajib dipilih !')
     //     .transform((val) => Number(val))
     //     .pipe(z.number().int().positive('Penduduk tidak valid')),
-    pendudukId: z.preprocess((val) => { if (typeof val === 'string') { return val.trim() === '' ? NaN : Number(val); } return val; }, z.number('pendudukId harus berupa angka').int('ID Penduduk harus bilangan bulat').positive('Penduduk wajib dipilih dan ID tidak valid'),),
-    // jenisSuratId: z.string().nonempty('Jenis surat wajib dipilih !')
-    //     .transform((val) => Number(val))
-    //     .pipe(z.number().int().positive('Jenis surat tidak valid')),
+    pendudukId: z.preprocess((val) => { if (typeof val === 'string') { return val.trim() === '' ? NaN : Number(val); } return val; }, z.number('pendudukId harus berupa angka').int('Penduduk tidak valid').positive('Penduduk tidak valid')),
+    // jenisSuratId: z.preprocess((val) => { if (typeof val === 'string') { return val.trim() === '' ? NaN : Number(val); } return val; }, z.number('jenisSuratId harus berupa angka').int('Jenis surat tidak valid').positive('Jenis surat tidak valid'),),
     statusSurat: StatusSuratEnum.default('PENDING'),
-    lingkup: LingkupSuratEnum.refine( (val) => !!val, { message: "Lingkup wajib dipilih" } ),
+    lingkup: LingkupSuratEnum.refine((val) => !!val, { message: "Lingkup wajib dipilih" }),
 });
 
 const keteranganUsahaFields = z.object({

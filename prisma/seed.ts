@@ -33,6 +33,8 @@ async function main() {
         },
     });
 
+    console.log('✅ Seeding: admin & pengurus');
+
     const setting = await prisma.setting.findFirst();
 
     if (!setting) {
@@ -72,7 +74,58 @@ async function main() {
         }
     });
 
-    console.log('✅ Seeding selesai: admin & pengurus');
+    const jenisSurat = [
+        {
+            kode: "KETERANGAN_USAHA",
+            namaSurat: "Surat Keterangan Usaha",
+            deskripsi: "Surat keterangan usaha yang dikeluarkan oleh desa.",
+            deletable: false,
+            templateFile: "keterangan_usaha.docx",
+        },
+        {
+            kode: "KETERANGAN_TIDAK_MAMPU_SEKOLAH",
+            namaSurat: "Surat Keterangan Tidak Mampu (Sekolah)",
+            deskripsi: "Surat keterangan tidak mampu untuk keperluan sekolah.",
+            deletable: false,
+            templateFile: "ktm_sekolah.docx",
+        },
+        {
+            kode: "KETERANGAN_SUAMI_ISTRI_KELUAR_NEGERI",
+            namaSurat: "Surat Keterangan Suami/Istri Keluar Negeri",
+            deskripsi: "Surat keterangan suami/istri untuk keperluan administrasi.",
+            deletable: false,
+            templateFile: "suami_istri_keluar_negeri.docx",
+        },
+        {
+            kode: "KETERANGAN_TIDAK_MEMILIKI_MOBIL",
+            namaSurat: "Surat Keterangan Tidak Memiliki Mobil",
+            deskripsi: "Surat keterangan untuk menyatakan tidak memiliki mobil.",
+            deletable: false,
+            templateFile: "tidak_memiliki_mobil.docx",
+        },
+        {
+            kode: "KETERANGAN_PROFESI",
+            namaSurat: "Surat Keterangan Profesi",
+            deskripsi: "Surat keterangan terkait profesi warga.",
+            deletable: false,
+            templateFile: "profesi.docx",
+        },
+        {
+            kode: "KETERANGAN_DOMISILI",
+            namaSurat: "Surat Keterangan Domisili",
+            deskripsi: "Surat keterangan domisili tempat tinggal.",
+            deletable: false,
+            templateFile: "domisili.docx",
+        },
+    ];
+
+    for (const surat of jenisSurat) {
+        await prisma.jenisSurat.upsert({
+            where: { kode: surat.kode },
+            update: surat,
+            create: surat,
+        });
+    }
 }
 
 main()

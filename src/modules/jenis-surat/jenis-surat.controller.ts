@@ -31,6 +31,16 @@ export class JenisSuratController {
     return this.jenisSuratService.create(createJenisSuratDto, templateFile);
   }
 
+  @Get('all')
+  @HttpCode(HttpStatus.OK)
+  findAllOptions() {
+    const queryParams = {
+      limit: 100,
+      sortBy: 'nama',
+    };
+    return this.jenisSuratService.findAll(queryParams);
+  }
+
   @Get()
   @HttpCode(HttpStatus.OK)
   findAll(

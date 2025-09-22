@@ -13,7 +13,7 @@ export class DashboardService {
             const yesterday = new Date(today);
             yesterday.setDate(yesterday.getDate() - 1);
 
-            // user & kk
+            // user & kartu keluarga
             const countUser = await this.prisma.user.count();
             const countKk = await this.prisma.kartuKeluarga.count();
 
@@ -28,48 +28,48 @@ export class DashboardService {
                 return acc;
             }, {} as Record<string, number>);
 
-            // pengajuan total (semua waktu)
+            // pengajuan total per status dan jenisSurat
             const countPengajuanRaw = await this.prisma.pengajuanSurat.groupBy({
-                by: ['statusSurat', 'jenis'],
+                by: ['statusSurat', 'jenisSuratId'],
                 _count: { _all: true },
             });
-            const countPengajuan = countPengajuanRaw.map((row) => ({
+
+            // ambil semua jenisSurat untuk mapping nama
+            const jenisSuratList = await this.prisma.jenisSurat.findMany({
+                select: { id: true, namaSurat: true },
+            });
+            const jenisSuratMap = Object.fromEntries(
+                jenisSuratList.map(j => [j.id, j.namaSurat])
+            );
+
+            const countPengajuan = countPengajuanRaw.map(row => ({
                 status: row.statusSurat,
-                jenis: row.jenis,
+                jenis: jenisSuratMap[row.jenisSuratId] || 'Tidak Diketahui',
                 total: row._count._all,
             }));
 
             // distribusi status total
             const distribusiStatus: Record<string, number> = {};
-            countPengajuan.forEach((row) => {
+            countPengajuan.forEach(row => {
                 distribusiStatus[row.status] =
                     (distribusiStatus[row.status] || 0) + row.total;
             });
 
             // distribusi jenis total
             const distribusiJenis: Record<string, number> = {};
-            countPengajuan.forEach((row) => {
+            countPengajuan.forEach(row => {
                 distribusiJenis[row.jenis] =
                     (distribusiJenis[row.jenis] || 0) + row.total;
             });
 
             // pengajuan hari ini
             const pengajuanHariIni = await this.prisma.pengajuanSurat.count({
-                where: {
-                    createdAt: {
-                        gte: today,
-                    },
-                },
+                where: { createdAt: { gte: today } },
             });
 
             // pengajuan kemarin
             const pengajuanKemarin = await this.prisma.pengajuanSurat.count({
-                where: {
-                    createdAt: {
-                        gte: yesterday,
-                        lt: today,
-                    },
-                },
+                where: { createdAt: { gte: yesterday, lt: today } },
             });
 
             return {
@@ -141,7 +141,10 @@ export class DashboardService {
 
         const pengajuanDariKK = await this.prisma.pengajuanSurat.findMany({
             where: { pendudukId: { in: anggotaKKIds } },
-            include: { penduduk: { select: { nama: true } } },
+            include: {
+                penduduk: { select: { nama: true } },
+                jenisSurat: { select: { namaSurat: true } },
+            },
             orderBy: { createdAt: 'desc' },
             take: 5
         });
@@ -172,7 +175,7 @@ export class DashboardService {
                     perStatus: pengajuanSummary,
                     detail: pengajuanDariKK.map((p) => ({
                         id: p.id,
-                        jenis: p.jenis,
+                        jenis: p.jenisSurat?.namaSurat || '—',
                         status: p.statusSurat,
                         tanggal: p.createdAt,
                         dibuatOleh: p.penduduk.nama,

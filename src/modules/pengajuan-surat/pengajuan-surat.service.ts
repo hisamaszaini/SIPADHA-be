@@ -15,11 +15,9 @@ export class PengajuanSuratService {
     data: fullCreatePengajuanSuratDto
   ) {
     try {
-      const { statusSurat, ...payload } = data;
+      const { statusSurat, jenis, ...payload } = data;
 
       let pendudukId: number;
-
-      console.log(user);
 
       if (user.role === 'WARGA') {
         const penduduk = await this.prisma.penduduk.findUnique({
@@ -31,9 +29,6 @@ export class PengajuanSuratService {
           throw new ForbiddenException('Data penduduk tidak ditemukan untuk user ini');
         }
 
-        console.log(`[CREATE] USER KkId: ${penduduk.kartuKeluargaId}`)
-
-
         // Validasi pendudukId
         const pendudukCheck = await this.prisma.penduduk.findFirst({
           where: {
@@ -42,8 +37,8 @@ export class PengajuanSuratService {
           },
         });
 
-        console.log(`[CREATE] userId: ${user.userId}`);
-        console.log(`[CREATE] pendudukId: ${payload.pendudukId}`);
+        // console.log(`[CREATE] userId: ${user.userId}`);
+        // console.log(`[CREATE] pendudukId: ${payload.pendudukId}`);
 
         if (!pendudukCheck) {
           throw new ForbiddenException('Penduduk yang dipilih bukan satu KK dengan user ini');
@@ -70,42 +65,44 @@ export class PengajuanSuratService {
         pendudukId = payload.pendudukId;
 
         const penduduk = await this.prisma.penduduk.findUnique({
-          where: { id: user.userId },
+          where: { id: payload.pendudukId },
           select: { id: true },
         });
+
 
         if (!penduduk) {
           throw new NotFoundException('Data penduduk tidak ditemukan');
         }
       }
 
-      // const jenisSurat = await this.prisma.jenisSurat.findUnique({
-      //   where: { id: jenisSuratId },
-      //   select: { id: true },
-      // });
+      const jenisSurat = await this.prisma.jenisSurat.findUnique({
+        where: { kode: jenis },
+        select: { id: true },
+      });
 
-      // if (!jenisSurat) {
-      //   throw new BadRequestException('jenisSuratId tidak valid');
-      // }
+      if (!jenisSurat) {
+        throw new BadRequestException('jenisSuratId tidak valid');
+      }
 
-      const { pendudukId: _, jenis, ...safePayload } = payload;
+      const { pendudukId: _, ...safePayload } = payload;
       const targetId = 'targetId' in safePayload ? safePayload.targetId : null;
 
-      if (targetId) {
+      if (targetId && user.role !== "WARGA") {
         const targetExist = await this.prisma.penduduk.findUnique({
           where: { id: targetId }
         });
 
         if (!targetExist) {
-          throw new NotFoundException('Data penduduk tidak ditemukan');
+          throw new NotFoundException('Data penduduk target tidak ditemukan');
         }
       }
 
       const pengajuan = await this.prisma.pengajuanSurat.create({
         data: {
           pendudukId,
+          lingkup: payload.lingkup,
+          jenisSuratId: jenisSurat.id,
           createdById: user.userId,
-          jenis,
           statusSurat,
           targetId: 'targetId' in safePayload ? safePayload.targetId : null,
           dataPermohonan: safePayload,
@@ -191,6 +188,7 @@ export class PengajuanSuratService {
           take: limit,
           orderBy: { [sortBy]: sortOrder },
           include: {
+            jenisSurat: { select: { id: true, kode: true, namaSurat: true }, },
             penduduk: {
               select: { id: true, nama: true, nik: true },
             },
@@ -201,6 +199,16 @@ export class PengajuanSuratService {
         }),
       ]);
 
+      const mappedData = data.map((pengajuan) => {
+        const { jenisSurat, ...rest } = pengajuan;
+
+        return {
+          ...rest,
+          jenis: jenisSurat?.kode,
+        };
+      });
+
+
       return {
         meta: {
           page,
@@ -208,7 +216,7 @@ export class PengajuanSuratService {
           total,
           totalPages: Math.ceil(total / limit),
         },
-        data,
+        data: mappedData,
       };
     } catch (error) {
       console.error('Gagal mengambil data pengajuan surat:', error);
@@ -236,7 +244,7 @@ export class PengajuanSuratService {
               }
             },
             target: true,
-            jenisSurat: true,
+            jenisSurat: { select: { id: true, kode: true, namaSurat: true, templateFile: true }, },
             createdBy: {
               select: { id: true, noHp: true, email: true, username: true, role: true },
             },
@@ -267,10 +275,17 @@ export class PengajuanSuratService {
         }
       }
 
+      const { jenisSurat, ...restOfPengajuan } = pengajuan;
+      const mappedPengajuan = {
+        ...restOfPengajuan,
+        jenis: jenisSurat?.kode ?? null,
+        templateFile: jenisSurat?.templateFile ?? null,
+      };
+
       return {
         success: true,
         message: "Detail pengajuan surat berhasil ditemukan",
-        data: { ...pengajuan, setting },
+        data: { ...mappedPengajuan, setting },
       };
     } catch (error) {
       console.error("Gagal mengambil detail pengajuan surat:", error);
@@ -289,16 +304,14 @@ export class PengajuanSuratService {
     try {
       const existing = await this.prisma.pengajuanSurat.findUnique({
         where: { id },
-        include: { penduduk: { select: { userId: true } } },
+        include: { penduduk: { select: { userId: true, kartuKeluargaId: true } } },
       });
 
       if (!existing) {
-        throw new NotFoundException(
-          `Pengajuan surat dengan id ${id} tidak ditemukan`,
-        );
+        throw new NotFoundException(`Pengajuan surat dengan id ${id} tidak ditemukan`);
       }
 
-      // WARGA hanya boleh update satu KK
+      // Validasi akses WARGA
       if (user.role === 'WARGA') {
         const pendudukLogin = await this.prisma.penduduk.findUnique({
           where: { userId: user.userId },
@@ -309,52 +322,91 @@ export class PengajuanSuratService {
           throw new ForbiddenException('Penduduk tidak ditemukan');
         }
 
-        const pendudukPemilik = await this.prisma.penduduk.findUnique({
-          where: { id: existing.pendudukId },
-          select: { kartuKeluargaId: true },
-        });
-
         if (
-          !pendudukPemilik ||
-          pendudukLogin.kartuKeluargaId !== pendudukPemilik.kartuKeluargaId
+          !existing.penduduk ||
+          existing.penduduk.kartuKeluargaId !== pendudukLogin.kartuKeluargaId
         ) {
-          throw new ForbiddenException(
-            'Anda tidak memiliki akses untuk mengubah pengajuan ini',
-          );
+          throw new ForbiddenException('Anda tidak memiliki akses untuk mengubah pengajuan ini');
         }
       }
 
-      const { jenisSuratId, statusSurat, pendudukId: pendudukIdFromPayload, ...payload } = data;
+      const {
+        jenis,
+        statusSurat,
+        pendudukId: pendudukIdFromPayload,
+        ...restPayload
+      } = data;
+
+      const jenisSurat = await this.prisma.jenisSurat.findUnique({
+        where: { kode: jenis },
+        select: { id: true },
+      });
+
+      if (!jenisSurat) {
+        throw new BadRequestException('jenisSuratId tidak valid');
+      }
+
+      const targetId = 'targetId' in restPayload ? restPayload.targetId : null;
 
       let pendudukId = existing.pendudukId;
       if (user.role !== 'WARGA' && pendudukIdFromPayload) {
+        // non-WARGA bisa ubah pendudukId
+        const penduduk = await this.prisma.penduduk.findUnique({
+          where: { id: pendudukIdFromPayload },
+          select: { id: true },
+        });
+        if (!penduduk) {
+          throw new NotFoundException('Data penduduk tidak ditemukan');
+        }
         pendudukId = pendudukIdFromPayload;
       }
 
-      // safePayload dijamin object
-      const safePayload: Record<string, unknown> = { ...payload };
-      delete safePayload['pendudukId'];
+      // Validasi targetId
+      if (targetId) {
+        if (user.role === 'WARGA') {
+          const pendudukLogin = await this.prisma.penduduk.findUnique({
+            where: { userId: user.userId },
+            select: { kartuKeluargaId: true },
+          });
+          const targetCheck = await this.prisma.penduduk.findFirst({
+            where: {
+              id: targetId,
+              kartuKeluargaId: pendudukLogin?.kartuKeluargaId,
+            },
+          });
+          if (!targetCheck) {
+            throw new ForbiddenException('Target bukan satu KK dengan user ini');
+          }
+        } else {
+          const targetExist = await this.prisma.penduduk.findUnique({
+            where: { id: targetId },
+          });
+          if (!targetExist) {
+            throw new NotFoundException('Data penduduk target tidak ditemukan');
+          }
+        }
+      }
+
+      const safePayload: Record<string, unknown> = { ...restPayload };
+
+      const newDataPermohonan: Prisma.InputJsonValue =
+        Object.keys(safePayload).length > 0
+          ? ({
+            ...(existing.dataPermohonan as Record<string, unknown>),
+            ...safePayload,
+          } as Prisma.InputJsonValue)
+          : (existing.dataPermohonan ?? {}) as Prisma.InputJsonValue;
 
       const updated = await this.prisma.pengajuanSurat.update({
         where: { id },
         data: {
           pendudukId,
-          jenis: (safePayload['jenis'] as string) ?? existing.jenis,
-          jenisSuratId: jenisSuratId ?? existing.jenisSuratId,
+          lingkup: restPayload.lingkup,
+          jenisSuratId: jenisSurat.id ?? existing.jenisSuratId,
           statusSurat:
-            user.role === 'WARGA'
-              ? existing.statusSurat
-              : statusSurat ?? existing.statusSurat,
-          targetId:
-            'targetId' in safePayload
-              ? (safePayload['targetId'] as number)
-              : existing.targetId,
-          dataPermohonan: Object.keys(safePayload).length > 0
-            ? ({
-              ...(existing.dataPermohonan as Record<string, unknown>),
-              ...safePayload,
-            } as Prisma.InputJsonValue)
-            : (existing.dataPermohonan as Prisma.InputJsonValue),
+            user.role === 'WARGA' ? existing.statusSurat : statusSurat ?? existing.statusSurat,
+          targetId: targetId ?? existing.targetId,
+          dataPermohonan: newDataPermohonan,
         },
       });
 
@@ -367,9 +419,7 @@ export class PengajuanSuratService {
       console.error('Gagal memperbarui pengajuan surat:', error);
       throw error instanceof HttpException
         ? error
-        : new InternalServerErrorException(
-          'Terjadi kesalahan saat memperbarui pengajuan surat',
-        );
+        : new InternalServerErrorException('Terjadi kesalahan saat memperbarui pengajuan surat');
     }
   }
 
@@ -392,6 +442,7 @@ export class PengajuanSuratService {
               },
             },
           },
+          jenisSurat: { select: { namaSurat: true } },
         },
       });
 
@@ -414,36 +465,37 @@ export class PengajuanSuratService {
         data: updateData,
       });
 
+      // Tentukan nomor HP penerima WA
       let noHp: string | null = null;
-
-      if (surat?.penduduk?.user?.noHp) {
+      if (surat.penduduk?.user?.noHp) {
         noHp = surat.penduduk.user.noHp;
-      } else if (surat?.penduduk?.kartuKeluarga?.anggotaKeluarga?.length) {
+      } else if (surat.penduduk?.kartuKeluarga?.anggotaKeluarga?.length) {
         const anggotaDenganUser = surat.penduduk.kartuKeluarga.anggotaKeluarga.find(
           (a) => a.userId && a.user?.noHp
         );
         if (anggotaDenganUser) noHp = anggotaDenganUser.user!.noHp;
       }
 
-      // Kirim notifikasi WA
+      // Label jenis surat
       const jenisSuratLabel =
-        jenisSuratOptions.find((j) => j.value === surat.jenis)?.label || surat.jenis;
+        jenisSuratOptions.find((j) => j.value === surat.jenisSurat?.namaSurat)?.label ||
+        surat.jenisSurat?.namaSurat ||
+        'Surat';
 
       const namaPenduduk = surat.penduduk.nama || '';
       const sapaan =
-        surat.penduduk.jenisKelamin === 'Laki-laki' ? 'Bapak' :
-          surat.penduduk.jenisKelamin === 'Perempuan' ? 'Ibu' :
-            'Bapak/Ibu';
+        surat.penduduk.jenisKelamin === 'Laki-laki'
+          ? 'Bapak'
+          : surat.penduduk.jenisKelamin === 'Perempuan'
+            ? 'Ibu'
+            : 'Bapak/Ibu';
 
+      // Tentukan salam berdasarkan jam
       const jam = new Date().getHours();
       let salam = 'Selamat Pagi';
-      if (jam >= 11 && jam < 15) {
-        salam = 'Selamat Siang';
-      } else if (jam >= 15 && jam < 18) {
-        salam = 'Selamat Sore';
-      } else if (jam >= 18 || jam < 4) {
-        salam = 'Selamat Malam';
-      }
+      if (jam >= 11 && jam < 15) salam = 'Selamat Siang';
+      else if (jam >= 15 && jam < 18) salam = 'Selamat Sore';
+      else if (jam >= 18 || jam < 4) salam = 'Selamat Malam';
 
       if (noHp) {
         if (data.statusSurat === 'DITOLAK') {

@@ -152,6 +152,7 @@ model JenisSurat {
   kode         String           @unique
   namaSurat    String
   deskripsi    String?
+  deletable    Boolean          @default(true)
   templateFile String
   pengajuan    PengajuanSurat[]
 }
@@ -160,8 +161,8 @@ model PengajuanSurat {
   id             Int         @id @default(autoincrement())
   pendudukId     Int
   targetId       Int?
-  jenis          String
-  jenisSuratId   Int?
+  jenisSuratId   Int
+  lingkup        String
   statusSurat    StatusSurat @default(PENDING)
   catatan        String?
   dataPermohonan Json
@@ -180,6 +181,7 @@ model PengajuanSurat {
   processEnd    DateTime?
   updatedAt     DateTime  @updatedAt
 
+  @@index([jenisSuratId])
   @@index([statusSurat])
   @@index([createdAt])
 }
