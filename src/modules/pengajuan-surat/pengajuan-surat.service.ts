@@ -504,14 +504,14 @@ export class PengajuanSuratService {
             `${salam} ${sapaan} ${namaPenduduk},\n\n` +
             `Pengajuan ${jenisSuratLabel} Anda *ditolak* oleh pihak desa.` +
             `\nAlasan: ${data.catatan ?? '-'}` +
-            `\n\nSilakan mengajukan kembali jika diperlukan.`
+            `\n\nSilahkan mengajukan kembali jika diperlukan.`
           );
         } else if (data.statusSurat === 'SELESAI') {
           await sendTextMessage(
             noHp,
             `${salam} ${sapaan} ${namaPenduduk},\n\n` +
             `Pengajuan ${jenisSuratLabel} Anda telah *selesai diproses*.` +
-            `\nSilakan mengambil surat secara langsung di kantor desa, karena terdapat *tanda tangan basah* dari Kepala Desa.` +
+            `\nSilahkan mengambil surat secara langsung di kantor desa, karena terdapat *tanda tangan basah* dari Kepala Desa.` +
             `\n\nTerima kasih atas perhatian Anda.`
           );
         }

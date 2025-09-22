@@ -9,7 +9,8 @@ export const JenisSuratEnum = z.enum([
     'KETERANGAN_TIDAK_MEMILIKI_MOBIL',
     'KETERANGAN_PROFESI',
     'KETERANGAN_DOMISILI',
-    'KETERANGAN_AHLI_WARIS'
+    'KETERANGAN_AHLI_WARIS',
+    ''
 ]);
 
 export const LingkupSuratEnum = z.enum([
