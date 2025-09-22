@@ -527,21 +527,29 @@ export class KartuKeluargaService {
       'KRISTEN': 'Kristen'
     };
 
-    // Helper parsing tanggal
+    const shdkMapping: Record<string, string> = {
+      'KEP. KELUARGA': 'Kepala Keluarga',
+      'ISTRI': 'Istri',
+      'ANAK': 'Anak',
+      'FAMILI LAIN': 'Famili Lain',
+      'CUCU': 'Cucu',
+      'ORANG TUA': 'Orang Tua',
+      'MERTUA': 'Mertua',
+      'MENANTU': 'Menantu',
+      'LAINNYA': 'Lainnya',
+    };
+
     const parseTanggalLahir = (value: string | number | Date): Date => {
       if (value instanceof Date) return value;
 
       if (typeof value === 'number') {
-        // Excel serial date
         return new Date(Math.round((value - 25569) * 86400 * 1000));
       }
 
       if (typeof value === 'string') {
-        // Format DD-MM-YYYY
         const parsed = parse(value, 'dd-MM-yyyy', new Date());
         if (!isNaN(parsed.getTime())) return parsed;
 
-        // fallback
         const fallback = new Date(value);
         if (!isNaN(fallback.getTime())) return fallback;
       }
@@ -585,7 +593,7 @@ export class KartuKeluargaService {
         tanggalLahir = parseTanggalLahir(row.TGL_LHR);
       } catch (err) {
         console.error(`Gagal parsing tanggal lahir untuk NIK ${row.NIK}:`, err.message);
-        continue; // skip row jika tanggal tidak valid
+        continue;
       }
 
       // Alamat otomatis
@@ -594,14 +602,14 @@ export class KartuKeluargaService {
       // Ambil semua anggota KK
       const anggotaKk = data.filter(d => d.NO_KK === noKk);
 
-      // Cek apakah KK sudah ada di DB
+      // Cek KK
       let kartuKeluargaId = kkMap[noKk];
       if (!kartuKeluargaId) {
         const existingKK = await this.prisma.kartuKeluarga.findUnique({ where: { noKk } });
         if (existingKK) kartuKeluargaId = existingKK.id;
       }
 
-      // Jika KK belum ada, insert kepala + KK
+      // Insert KK jika belum ada
       if (!kartuKeluargaId) {
         const kepala = anggotaKk[0];
         await this.prisma.$transaction(async (prisma) => {
@@ -611,12 +619,12 @@ export class KartuKeluargaService {
               nama: kepala.NAMA,
               tempatLahir: kepala.TMPT_LHR,
               tanggalLahir,
-              jenisKelamin: kepala.JK,
-              agama: agamaMapping[kepala.agama],
+              jenisKelamin: jkMapping[kepala.JK] ?? kepala.JK,
+              agama: agamaMapping[kepala.AGAMA] ?? kepala.AGAMA,
               statusPerkawinan: statusMapping[kepala.STATUS] ?? kepala.STATUS,
               pendidikan: pendidikanMapping[kepala.PDDK_AKHR] ?? kepala.PDDK_AKHR,
               pekerjaan: kepala.PEKERJAAN,
-              hubunganDalamKeluarga: 'Kepala Keluarga',
+              hubunganDalamKeluarga: shdkMapping[kepala.SHDK] ?? 'Famili Lain',
               kartuKeluarga: {
                 create: {
                   noKk,
@@ -629,7 +637,6 @@ export class KartuKeluargaService {
             }
           });
 
-          // Update kepalaPendudukId di KK
           await prisma.kartuKeluarga.update({
             where: { id: kepalaKeluarga.kartuKeluargaId },
             data: { kepalaPendudukId: kepalaKeluarga.id }
@@ -646,12 +653,12 @@ export class KartuKeluargaService {
                 nama: anggota.NAMA,
                 tempatLahir: anggota.TMPT_LHR,
                 tanggalLahir,
-                jenisKelamin: anggota.JK,
-                agama: agamaMapping[anggota.AGAMA],
+                jenisKelamin: jkMapping[anggota.JK] ?? anggota.JK,
+                agama: agamaMapping[anggota.AGAMA] ?? anggota.AGAMA,
                 statusPerkawinan: statusMapping[anggota.STATUS] ?? anggota.STATUS,
                 pendidikan: pendidikanMapping[anggota.PDDK_AKHR] ?? anggota.PDDK_AKHR,
                 pekerjaan: anggota.PEKERJAAN,
-                hubunganDalamKeluarga: 'Anggota Keluarga',
+                hubunganDalamKeluarga: shdkMapping[anggota.SHDK] ?? 'Famili Lain',
                 kartuKeluargaId,
               }
             });
@@ -662,6 +669,5 @@ export class KartuKeluargaService {
 
     return { message: 'Import Kartu Keluarga berhasil' };
   }
-
 
 }
