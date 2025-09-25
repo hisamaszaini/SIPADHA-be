@@ -14,6 +14,7 @@ import { ConfigModule } from '@nestjs/config';
 import { KartuKeluargaModule } from './modules/kartu-keluarga/kartu-keluarga.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { SettingModule } from './modules/setting/setting.module';
+import { ImportExportModule } from './modules/import-export/import-export.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { SettingModule } from './modules/setting/setting.module';
     KartuKeluargaModule,
     DashboardModule,
     SettingModule,
+    ImportExportModule,
 
   ],
   controllers: [AppController],
