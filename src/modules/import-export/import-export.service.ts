@@ -169,23 +169,14 @@ export class ImportExportService {
     }
 
     private async processKartuKeluarga(noKk: string, anggotaKk: any[], referenceMaps: any) {
+        if (anggotaKk.length === 0) return;
+
         const kepala = anggotaKk[0];
-
-        // Check if KK already exists
-        const existingKK = await this.prisma.kartuKeluarga.findUnique({
-            where: { noKk },
-            include: { anggotaKeluarga: true }
-        });
-
-        if (existingKK && existingKK.anggotaKeluarga.length > 0) {
-            throw new Error(`KK ${noKk} sudah ada dengan ${existingKK.anggotaKeluarga.length} anggota`);
-        }
-
         const namaDukuh = this.cleanDukuhName(kepala.ALAMAT);
         const noRw = kepala.NO_RW.toString().padStart(2, '0');
         const noRt = kepala.NO_RT.toString().padStart(2, '0');
 
-        // Resolve or create Dukuh
+        // Resolve Dukuh
         let dukuhId = referenceMaps.dukuhMap.get(namaDukuh);
         if (!dukuhId) {
             const dukuh = await this.prisma.dukuh.upsert({
@@ -197,7 +188,7 @@ export class ImportExportService {
             referenceMaps.dukuhMap.set(namaDukuh, dukuhId);
         }
 
-        // Resolve or create RW
+        // Resolve RW
         const rwKey = `${noRw}-${dukuhId}`;
         let rwId = referenceMaps.rwMap.get(rwKey);
         if (!rwId) {
@@ -210,7 +201,7 @@ export class ImportExportService {
             referenceMaps.rwMap.set(rwKey, rwId);
         }
 
-        // Resolve or create RT
+        // Resolve RT
         const rtKey = `${noRt}-${rwId}`;
         let rtId = referenceMaps.rtMap.get(rtKey);
         if (!rtId) {
@@ -225,34 +216,32 @@ export class ImportExportService {
 
         const alamat = `RT ${noRt} RW ${noRw} Dukuh ${namaDukuh} Desa Cepoko`;
 
-        // Process in transaction
+        // Cek KK di map
+        let kartuKeluargaId = referenceMaps.kkMap?.[noKk];
+        if (!kartuKeluargaId) {
+            const existingKK = await this.prisma.kartuKeluarga.findUnique({ where: { noKk } });
+            if (existingKK) kartuKeluargaId = existingKK.id;
+        }
+
         await this.prisma.$transaction(async (prisma) => {
-            // 1. Upsert KK dulu
+            // 1. Upsert KK
             const kk = await prisma.kartuKeluarga.upsert({
                 where: { noKk },
-                update: {
-                    alamat,
-                    dukuhId,
-                    rwId,
-                    rtId,
-                },
-                create: {
-                    noKk,
-                    alamat,
-                    dukuhId,
-                    rwId,
-                    rtId,
-                },
+                update: { alamat, dukuhId, rwId, rtId },
+                create: { noKk, alamat, dukuhId, rwId, rtId },
             });
+            kartuKeluargaId = kk.id;
+            referenceMaps.kkMap = referenceMaps.kkMap || {};
+            referenceMaps.kkMap[noKk] = kartuKeluargaId;
 
             // 2. Upsert kepala keluarga
-            const kepalaLahir = this.parseTanggalLahirStrict(kepala.TGL_LHR, kepala.NIK);
+            const tanggalLahirKepala = this.parseTanggalLahirStrict(kepala.TGL_LHR, kepala.NIK);
             const kepalaKeluarga = await prisma.penduduk.upsert({
                 where: { nik: kepala.NIK.toString() },
                 update: {
                     nama: kepala.NAMA,
                     tempatLahir: kepala.TMPT_LHR,
-                    tanggalLahir: kepalaLahir,
+                    tanggalLahir: tanggalLahirKepala,
                     jenisKelamin: jkMapping[kepala.JK] ?? kepala.JK,
                     agama: agamaMapping[kepala.AGAMA] ?? kepala.AGAMA,
                     statusPerkawinan: statusMapping[kepala.STATUS] ?? kepala.STATUS,
@@ -265,7 +254,7 @@ export class ImportExportService {
                     nik: kepala.NIK.toString(),
                     nama: kepala.NAMA,
                     tempatLahir: kepala.TMPT_LHR,
-                    tanggalLahir: kepalaLahir,
+                    tanggalLahir: tanggalLahirKepala,
                     jenisKelamin: jkMapping[kepala.JK] ?? kepala.JK,
                     agama: agamaMapping[kepala.AGAMA] ?? kepala.AGAMA,
                     statusPerkawinan: statusMapping[kepala.STATUS] ?? kepala.STATUS,
@@ -276,46 +265,43 @@ export class ImportExportService {
                 },
             });
 
-            // 3. Update KK supaya link ke kepala keluarga
+            // 3. Update KK kepala
             await prisma.kartuKeluarga.update({
                 where: { id: kk.id },
                 data: { kepalaPendudukId: kepalaKeluarga.id },
             });
 
-            // 4. Upsert anggota keluarga lain
-            if (anggotaKk.length > 1) {
-                for (const anggota of anggotaKk.slice(1)) {
-                    const anggotaLahir = this.parseTanggalLahirStrict(anggota.TGL_LHR, anggota.NIK);
-
-                    await prisma.penduduk.upsert({
-                        where: { nik: anggota.NIK.toString() },
-                        update: {
-                            nama: anggota.NAMA,
-                            tempatLahir: anggota.TMPT_LHR,
-                            tanggalLahir: anggotaLahir,
-                            jenisKelamin: jkMapping[anggota.JK] ?? anggota.JK,
-                            agama: agamaMapping[anggota.AGAMA] ?? anggota.AGAMA,
-                            statusPerkawinan: statusMapping[anggota.STATUS] ?? anggota.STATUS,
-                            pendidikan: pendidikanMapping[anggota.PDDK_AKHR] ?? anggota.PDDK_AKHR,
-                            pekerjaan: anggota.PEKERJAAN,
-                            hubunganDalamKeluarga: shdkMapping[anggota.SHDK] ?? 'Famili Lain',
-                            kartuKeluargaId: kk.id,
-                        },
-                        create: {
-                            nik: anggota.NIK.toString(),
-                            nama: anggota.NAMA,
-                            tempatLahir: anggota.TMPT_LHR,
-                            tanggalLahir: anggotaLahir,
-                            jenisKelamin: jkMapping[anggota.JK] ?? anggota.JK,
-                            agama: agamaMapping[anggota.AGAMA] ?? anggota.AGAMA,
-                            statusPerkawinan: statusMapping[anggota.STATUS] ?? anggota.STATUS,
-                            pendidikan: pendidikanMapping[anggota.PDDK_AKHR] ?? anggota.PDDK_AKHR,
-                            pekerjaan: anggota.PEKERJAAN,
-                            hubunganDalamKeluarga: shdkMapping[anggota.SHDK] ?? 'Famili Lain',
-                            kartuKeluargaId: kk.id,
-                        },
-                    });
-                }
+            // 4. Upsert anggota lain
+            for (const anggota of anggotaKk.slice(1)) {
+                const tanggalLahirAnggota = this.parseTanggalLahirStrict(anggota.TGL_LHR, anggota.NIK);
+                await prisma.penduduk.upsert({
+                    where: { nik: anggota.NIK.toString() },
+                    update: {
+                        nama: anggota.NAMA,
+                        tempatLahir: anggota.TMPT_LHR,
+                        tanggalLahir: tanggalLahirAnggota,
+                        jenisKelamin: jkMapping[anggota.JK] ?? anggota.JK,
+                        agama: agamaMapping[anggota.AGAMA] ?? anggota.AGAMA,
+                        statusPerkawinan: statusMapping[anggota.STATUS] ?? anggota.STATUS,
+                        pendidikan: pendidikanMapping[anggota.PDDK_AKHR] ?? anggota.PDDK_AKHR,
+                        pekerjaan: anggota.PEKERJAAN,
+                        hubunganDalamKeluarga: shdkMapping[anggota.SHDK] ?? 'Famili Lain',
+                        kartuKeluargaId: kk.id,
+                    },
+                    create: {
+                        nik: anggota.NIK.toString(),
+                        nama: anggota.NAMA,
+                        tempatLahir: anggota.TMPT_LHR,
+                        tanggalLahir: tanggalLahirAnggota,
+                        jenisKelamin: jkMapping[anggota.JK] ?? anggota.JK,
+                        agama: agamaMapping[anggota.AGAMA] ?? anggota.AGAMA,
+                        statusPerkawinan: statusMapping[anggota.STATUS] ?? anggota.STATUS,
+                        pendidikan: pendidikanMapping[anggota.PDDK_AKHR] ?? anggota.PDDK_AKHR,
+                        pekerjaan: anggota.PEKERJAAN,
+                        hubunganDalamKeluarga: shdkMapping[anggota.SHDK] ?? 'Famili Lain',
+                        kartuKeluargaId: kk.id,
+                    },
+                });
             }
         });
     }
