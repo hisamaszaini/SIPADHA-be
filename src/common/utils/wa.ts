@@ -22,7 +22,7 @@ async function getSetting(): Promise<Setting> {
   return setting;
 }
 
-function formatNoHp(noHp: string): string {
+export function formatNoHp(noHp: string): string {
   let formatted = noHp.trim();
 
   if (formatted.startsWith('08')) {

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'prisma/prisma.service';
 import { settingDto } from './dto/setting.dto';
+import { formatNoHp } from '@/common/utils/wa';
 
 @Injectable()
 export class SettingService {
@@ -26,6 +27,7 @@ export class SettingService {
             data: {
                 ...data,
                 tanggalLahirKepdes: new Date(data.tanggalLahirKepdes),
+                nomorWa: formatNoHp(data.nomorWa),
             },
         });
     }

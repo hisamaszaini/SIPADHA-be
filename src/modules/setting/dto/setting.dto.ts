@@ -6,7 +6,8 @@ export const settingSchema = z.object({
     jenisKelaminKepdes: z.enum(['Laki-laki', 'Perempuan']),
     alamatKepdes: z.string().nonempty('Alamat Kepala Desa wajib diisi'),
     tempatLahirKepdes: z.string().nonempty('Tempat Lahir Kepada Desa wajib diisi'),
-    tanggalLahirKepdes: z.coerce.date({ 'message': 'Tanggal lahir wajib diisi' }),
+    tanggalLahirKepdes: z.iso.datetime('Tanggal lahir wajib diisi').nonempty('Tanggal lahir wajib diisi'),
+    nomorWa: z.string().nonempty('Nomor Whatsapp Admin wajib diisi'),
     endPointWa: z.string().nonempty('Alamat API Endpoint Whatsapp wajib diisi'),
 });
 

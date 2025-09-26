@@ -46,6 +46,7 @@ async function main() {
                 alamatKepdes: "Jl. Raya Desa",
                 tempatLahirKepdes: "Ponorogo",
                 tanggalLahirKepdes: new Date("1970-01-01"),
+                nomorWa: "085755217004",
                 endPointWa: "http://localhost:3000/api/wa",
             },
         });

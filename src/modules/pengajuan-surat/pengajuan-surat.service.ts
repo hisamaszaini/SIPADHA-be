@@ -311,6 +311,11 @@ export class PengajuanSuratService {
         throw new NotFoundException(`Pengajuan surat dengan id ${id} tidak ditemukan`);
       }
 
+      // Cegah update jika statusSurat sudah SELESAI dan user adalah WARGA
+      if (existing.statusSurat === 'SELESAI' && user.role === 'WARGA') {
+        throw new BadRequestException('Pengajuan surat yang sudah selesai tidak bisa diubah lagi');
+      }
+
       // Validasi akses WARGA
       if (user.role === 'WARGA') {
         const pendudukLogin = await this.prisma.penduduk.findUnique({
@@ -349,16 +354,28 @@ export class PengajuanSuratService {
       const targetId = 'targetId' in restPayload ? restPayload.targetId : null;
 
       let pendudukId = existing.pendudukId;
-      if (user.role !== 'WARGA' && pendudukIdFromPayload) {
-        // non-WARGA bisa ubah pendudukId
-        const penduduk = await this.prisma.penduduk.findUnique({
-          where: { id: pendudukIdFromPayload },
-          select: { id: true },
-        });
-        if (!penduduk) {
-          throw new NotFoundException('Data penduduk tidak ditemukan');
+
+      if (pendudukIdFromPayload) {
+        if (user.role === 'WARGA') {
+          // validasi satu KK
+          const dataPenduduk = await this.prisma.penduduk.findUnique({
+            where: { userId: user.userId },
+            select: { kartuKeluargaId: true },
+          });
+
+          const pendudukCheck = await this.prisma.penduduk.findFirst({
+            where: {
+              id: pendudukIdFromPayload,
+              kartuKeluargaId: dataPenduduk?.kartuKeluargaId,
+            },
+          });
+
+          if (!pendudukCheck) {
+            throw new ForbiddenException('PendudukId baru bukan satu KK dengan user ini');
+          }
+
+          pendudukId = pendudukIdFromPayload;
         }
-        pendudukId = pendudukIdFromPayload;
       }
 
       // Validasi targetId
@@ -404,7 +421,9 @@ export class PengajuanSuratService {
           lingkup: restPayload.lingkup,
           jenisSuratId: jenisSurat.id ?? existing.jenisSuratId,
           statusSurat:
-            user.role === 'WARGA' ? existing.statusSurat : statusSurat ?? existing.statusSurat,
+            user.role === 'WARGA'
+              ? 'PENDING'
+              : statusSurat ?? existing.statusSurat,
           targetId: targetId ?? existing.targetId,
           dataPermohonan: newDataPermohonan,
         },
