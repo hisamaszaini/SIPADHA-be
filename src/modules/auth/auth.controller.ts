@@ -9,11 +9,12 @@ import {
   UnauthorizedException,
   UseGuards,
   Get,
+  BadRequestException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { ZodValidationPipe } from '@/common/pipes/zod-validation.pipe';
-import { LoginDto, loginSchema, refreshSchema, RegisterDto, registerSchema, WargaRegisterDto } from './dto/auth.dto';
+import { LoginDto, loginSchema, refreshSchema, RegisterDto, registerSchema, WargaRegisterDto, wargaRegisterSchema } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { User } from './auth.types';
 import { GetUser } from '@/common/decorators/user.decorator';
@@ -47,7 +48,16 @@ export class AuthController {
   @Post('registerWarga')
   @HttpCode(201)
   async registerWarga(@Body() dto: WargaRegisterDto) {
-    return this.authService.registerWarga(dto);
+    const validatedData = wargaRegisterSchema.safeParse(dto);
+    if (!validatedData.success) {
+      const formattedErrors = validatedData.error.flatten();
+      throw new BadRequestException({
+        message: 'Data yang dikirim tidak valid',
+        errors: formattedErrors.fieldErrors,
+      });
+    }
+    const data = validatedData.data;
+    return this.authService.registerWarga(data);
   }
 
   /* Login */
