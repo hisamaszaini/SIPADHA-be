@@ -120,8 +120,8 @@ export class UsersService {
     }
 
     // Role & status
-    if (dto.role) data.role = dto.role;
-    if (dto.statusUser) data.statusUser = dto.statusUser;
+    if (dto.role !== undefined) data.role = dto.role;
+    if (dto.statusUser !== undefined) data.statusUser = dto.statusUser;
 
     // NIK hanya untuk WARGA
     if ((dto.role === 'WARGA' || user.role === 'WARGA') && dto.nik) {
@@ -193,7 +193,7 @@ export class UsersService {
     const updated = await this.prisma.user.update({
       where: { id },
       data,
-      include: {penduduk: true}
+      include: { penduduk: true }
     });
 
     const { password, refreshToken, ...userData } = updated;
@@ -245,6 +245,7 @@ export class UsersService {
             id: true,
             username: true,
             role: true,
+            statusUser: true,
             createdAt: true,
             updatedAt: true,
             penduduk: {
@@ -286,6 +287,7 @@ export class UsersService {
           username: true,
           email: true,
           role: true,
+          statusUser: true,
           createdAt: true,
           updatedAt: true,
           penduduk: {

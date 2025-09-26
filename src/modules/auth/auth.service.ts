@@ -100,6 +100,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if(user.statusUser === 'INACTIVE') {
+      throw new UnauthorizedException('Akun Anda dinonaktifkan. Silakan hubungi administrator.');
+    }
+
     const tokens = await this.generateTokens(user.id, user.email, user.role);
     await this.updateRefreshToken(user.id, tokens.refreshToken);
     return { message: 'Login successful', data: tokens };
