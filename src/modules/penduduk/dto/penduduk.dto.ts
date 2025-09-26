@@ -1,10 +1,10 @@
 import z from "zod";
 
 export const createPendudukSchema = z.object({
-    nik: z.string().nonempty('Nomor Induk Kependudukan tidak boleh kosong!').min(16, 'Nomor Induk Kependudukan minimal 16 digit').regex(/^[0-9]+$/, 'Nomor Induk Kependudukan hanya boleh mengandung angka').trim(),
+    nik: z.string().nonempty('NIK tidak boleh kosong!').min(16, 'NIK minimal 16 digit').max(16, 'NIK maksimal 16 digit').regex(/^[0-9]+$/, 'NIK hanya boleh mengandung angka').trim(),
     nama: z.string().nonempty('Nama tidak boleh kosong').trim(),
     tempatLahir: z.string().nonempty('Tempat Lahir wajib diisi').trim(),
-    tanggalLahir: z.iso.datetime('Tanggal lahir wajib diisi'),
+    tanggalLahir: z.iso.datetime('Tanggal lahir wajib diisi').nonempty('Tanggal lahir wajib diisi'),
     jenisKelamin: z.enum(['Laki-laki', 'Perempuan']),
     agama: z.enum(['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Khonghucu']),
     statusPerkawinan: z.enum(['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati']),
