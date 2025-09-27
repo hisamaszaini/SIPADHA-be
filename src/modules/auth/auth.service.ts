@@ -100,8 +100,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if(user.statusUser === 'INACTIVE') {
-      throw new UnauthorizedException('Akun Anda dinonaktifkan. Silakan hubungi administrator.');
+    if (user.statusUser === 'INACTIVE') {
+      const setting = await this.prisma.setting.findFirst();
+
+      throw new UnauthorizedException({
+        message: 'Akun Anda dinonaktifkan. Silakan hubungi administrator.',
+        error: 'UNAUTHORIZED',
+        errors: {
+          helpLink: `https://wa.me/${setting?.nomorWa ?? '6281234567890'}`
+        },
+      });
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.role);

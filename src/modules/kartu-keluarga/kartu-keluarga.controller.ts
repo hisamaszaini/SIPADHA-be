@@ -66,7 +66,7 @@ export class KartuKeluargaController {
   @Roles('ADMIN', 'PENGURUS')
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: updateKartuKeluargaWithPendudukDto) {
-    return this.kartuKeluargaService.update(+id, dto);
+    return this.kartuKeluargaService.updateKartuKeluarga(+id, dto);
   }
 
   @Roles('ADMIN', 'PENGURUS')

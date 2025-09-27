@@ -309,36 +309,76 @@ export class KartuKeluargaService {
     }
   }
 
-  async update(id: number, dto: updateKartuKeluargaWithPendudukDto) {
+  async updateKartuKeluarga(
+    id: number,
+    dto: updateKartuKeluargaWithPendudukDto
+  ) {
     const kk = await this.prisma.kartuKeluarga.findUnique({
       where: { id },
-      include: { anggotaKeluarga: true },
+      include: { anggotaKeluarga: true, kepalaKeluarga: true },
     });
 
-    if (!kk) {
-      throw new NotFoundException('Kartu Keluarga tidak ditemukan');
-    }
+    if (!kk) throw new NotFoundException('Kartu Keluarga tidak ditemukan');
 
-    if (dto.noKk && dto.noKk !== kk.noKk) {
-      const existing = await this.prisma.kartuKeluarga.findUnique({
-        where: { noKk: dto.noKk },
-      });
-      if (existing) {
-        throw new ConflictException('Nomor KK sudah terdaftar');
+    let kepalaBaruId: number = kk.kepalaPendudukId!;
+
+    await this.prisma.$transaction(async (prisma) => {
+      // --- Tangani NIK baru ---
+      if (dto.nik) {
+        let penduduk = await prisma.penduduk.findUnique({
+          where: { nik: dto.nik },
+          include: { kepalaDariKeluarga: true }
+        });
+
+        if (penduduk) {
+          // Cek apakah penduduk sudah jadi kepala KK lain
+          if (penduduk.kepalaDariKeluarga && penduduk.kepalaDariKeluarga.id !== kk.id) {
+            throw new BadRequestException('Penduduk ini sudah menjadi kepala KK lain');
+          }
+
+          kepalaBaruId = penduduk.id;
+
+          // Update hubungan dalam keluarga & pastikan anggota KK ini
+          await prisma.penduduk.update({
+            where: { id: penduduk.id },
+            data: {
+              hubunganDalamKeluarga: 'Kepala Keluarga',
+              kartuKeluargaId: kk.id,
+            },
+          });
+
+        } else {
+          // Buat penduduk baru
+          const newPenduduk = await prisma.penduduk.create({
+            data: {
+              nik: dto.nik,
+              nama: dto.nama!,
+              tempatLahir: dto.tempatLahir!,
+              tanggalLahir: dto.tanggalLahir!,
+              jenisKelamin: dto.jenisKelamin!,
+              agama: dto.agama!,
+              statusPerkawinan: dto.statusPerkawinan!,
+              pendidikan: dto.pendidikan || null,
+              pekerjaan: dto.pekerjaan || null,
+              hubunganDalamKeluarga: 'Kepala Keluarga',
+              kartuKeluargaId: kk.id,
+            },
+          });
+
+          kepalaBaruId = newPenduduk.id;
+        }
       }
-    }
 
-    if (dto.nik) {
-      const existingNik = await this.prisma.penduduk.findUnique({
-        where: { nik: dto.nik },
-      });
-      if (existingNik && existingNik.id !== kk.kepalaPendudukId) {
-        throw new ConflictException('NIK sudah terdaftar');
+      // --- Update kepala lama menjadi Lainnya ---
+      if (kk.kepalaPendudukId && kk.kepalaPendudukId !== kepalaBaruId) {
+        await prisma.penduduk.update({
+          where: { id: kk.kepalaPendudukId },
+          data: { hubunganDalamKeluarga: 'Famili Lain' },
+        });
       }
-    }
 
-    const result = await this.prisma.$transaction(async (prisma) => {
-      const updatedKK = await prisma.kartuKeluarga.update({
+      // --- Update Kartu Keluarga ---
+      await prisma.kartuKeluarga.update({
         where: { id },
         data: {
           noKk: dto.noKk ?? kk.noKk,
@@ -346,53 +386,106 @@ export class KartuKeluargaService {
           dukuhId: dto.dukuhId ?? kk.dukuhId,
           rwId: dto.rwId ?? kk.rwId,
           rtId: dto.rtId ?? kk.rtId,
-        },
-      });
-
-      if (kk.kepalaPendudukId) {
-        await prisma.penduduk.update({
-          where: { id: kk.kepalaPendudukId },
-          data: {
-            nik: dto.nik,
-            nama: dto.nama,
-            tempatLahir: dto.tempatLahir,
-            tanggalLahir: dto.tanggalLahir,
-            jenisKelamin: dto.jenisKelamin,
-            agama: dto.agama,
-            statusPerkawinan: dto.statusPerkawinan,
-            pendidikan: dto.pendidikan,
-            pekerjaan: dto.pekerjaan,
-          },
-        });
-      }
-
-      if (dto.kepalaPendudukId && dto.kepalaPendudukId !== kk.kepalaPendudukId) {
-        const anggotaValid = kk.anggotaKeluarga.find(a => a.id === dto.kepalaPendudukId);
-        if (!anggotaValid) {
-          throw new BadRequestException('Penduduk bukan anggota dari KK ini');
-        }
-
-        await prisma.kartuKeluarga.update({
-          where: { id },
-          data: { kepalaPendudukId: dto.kepalaPendudukId },
-        });
-      }
-
-      return prisma.kartuKeluarga.findUnique({
-        where: { id },
-        include: {
-          kepalaKeluarga: { select: { id: true, nik: true, nama: true } },
-          anggotaKeluarga: { select: { id: true, nik: true, nama: true } },
-          rt: { include: { rw: { include: { dukuh: true } } } },
+          kepalaPendudukId: kepalaBaruId,
         },
       });
     });
 
-    return {
-      message: 'Kartu Keluarga berhasil diperbarui',
-      data: result,
-    };
+    // --- Return data terbaru ---
+    return this.prisma.kartuKeluarga.findUnique({
+      where: { id },
+      include: {
+        kepalaKeluarga: true,
+        anggotaKeluarga: true,
+        rt: { include: { rw: { include: { dukuh: true } } } },
+      },
+    });
   }
+
+  // async update(id: number, dto: updateKartuKeluargaWithPendudukDto) {
+  //   const kk = await this.prisma.kartuKeluarga.findUnique({
+  //     where: { id },
+  //     include: { anggotaKeluarga: true },
+  //   });
+
+  //   if (!kk) {
+  //     throw new NotFoundException('Kartu Keluarga tidak ditemukan');
+  //   }
+
+  //   if (dto.noKk && dto.noKk !== kk.noKk) {
+  //     const existing = await this.prisma.kartuKeluarga.findUnique({
+  //       where: { noKk: dto.noKk },
+  //     });
+  //     if (existing) {
+  //       throw new ConflictException('Nomor KK sudah terdaftar');
+  //     }
+  //   }
+
+  //   if (dto.nik) {
+  //     const existingNik = await this.prisma.penduduk.findUnique({
+  //       where: { nik: dto.nik },
+  //     });
+  //     if (existingNik && existingNik.id !== kk.kepalaPendudukId) {
+  //       throw new ConflictException('NIK sudah terdaftar');
+  //     }
+  //   }
+
+  //   const result = await this.prisma.$transaction(async (prisma) => {
+  //     const updatedKK = await prisma.kartuKeluarga.update({
+  //       where: { id },
+  //       data: {
+  //         noKk: dto.noKk ?? kk.noKk,
+  //         alamat: dto.alamat ?? kk.alamat,
+  //         dukuhId: dto.dukuhId ?? kk.dukuhId,
+  //         rwId: dto.rwId ?? kk.rwId,
+  //         rtId: dto.rtId ?? kk.rtId,
+  //       },
+  //     });
+
+  //     if (kk.kepalaPendudukId) {
+  //       await prisma.penduduk.update({
+  //         where: { id: kk.kepalaPendudukId },
+  //         data: {
+  //           nik: dto.nik,
+  //           nama: dto.nama,
+  //           tempatLahir: dto.tempatLahir,
+  //           tanggalLahir: dto.tanggalLahir,
+  //           jenisKelamin: dto.jenisKelamin,
+  //           agama: dto.agama,
+  //           statusPerkawinan: dto.statusPerkawinan,
+  //           pendidikan: dto.pendidikan,
+  //           pekerjaan: dto.pekerjaan,
+  //         },
+  //       });
+  //     }
+
+  //     if (dto.kepalaPendudukId && dto.kepalaPendudukId !== kk.kepalaPendudukId) {
+  //       const anggotaValid = kk.anggotaKeluarga.find(a => a.id === dto.kepalaPendudukId);
+  //       if (!anggotaValid) {
+  //         throw new BadRequestException('Penduduk bukan anggota dari KK ini');
+  //       }
+
+  //       await prisma.kartuKeluarga.update({
+  //         where: { id },
+  //         data: { kepalaPendudukId: dto.kepalaPendudukId },
+  //       });
+  //     }
+
+  //     return prisma.kartuKeluarga.findUnique({
+  //       where: { id },
+  //       include: {
+  //         kepalaKeluarga: { select: { id: true, nik: true, nama: true } },
+  //         anggotaKeluarga: { select: { id: true, nik: true, nama: true } },
+  //         rt: { include: { rw: { include: { dukuh: true } } } },
+  //       },
+  //     });
+  //   });
+
+  //   return {
+  //     message: 'Kartu Keluarga berhasil diperbarui',
+  //     data: result,
+  //   };
+  // }
 
   async remove(id: number) {
     try {
