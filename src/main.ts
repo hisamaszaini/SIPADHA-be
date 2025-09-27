@@ -9,9 +9,6 @@ import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
 import { join } from 'path';
 import { cwd } from 'process';
-import { ZodValidationPipe } from 'nestjs-zod';
-import { ImportExportService } from './modules/import-export/import-export.service';
-import { createImportWorker } from './modules/import-export/import-excel.processor';
 
 moduleAlias.addAliases({
   '@': path.resolve(__dirname, 'src'),
@@ -30,10 +27,6 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ApiResponseInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.use('/uploads', express.static(join(cwd(), 'uploads')));
-  const importExportService = app.get(ImportExportService);
-  createImportWorker(importExportService);
-
-
   const port = process.env.PORT || 3334;
   await app.listen(port);
   console.log(`🚀 HTTP server running on http://localhost:${port}`);
