@@ -54,7 +54,7 @@ export class UsersService {
             username: dto.username,
             password: await hash(dto.password),
             role: dto.role,
-            statusUser: dto.StatusUser ?? 'ACTIVE',
+            statusUser: dto.statusUser ?? 'ACTIVE',
           },
         });
 
