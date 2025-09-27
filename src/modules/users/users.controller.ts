@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatu
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { RegisterDto, registerSchema, UpdateProfileDto, UpdateUserDto } from './dto/users.dto';
+import { RegisterDto, registerSchema, UpdateProfileDto, UpdateUserDto, updateUserSchema } from './dto/users.dto';
 import { UsersService } from './users.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -74,7 +74,7 @@ export class UsersController {
   @Roles('ADMIN', 'PENGURUS')
   @HttpCode(HttpStatus.OK)
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    const validatedData = registerSchema.safeParse(dto);
+    const validatedData = updateUserSchema.safeParse(dto);
     if (!validatedData.success) {
       const formattedErrors = validatedData.error.flatten();
       throw new BadRequestException({
