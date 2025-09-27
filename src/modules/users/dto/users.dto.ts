@@ -41,29 +41,41 @@ export const updateUserSchema = z
     noHp: z.string().nonempty('No HP wajib diisi').trim().optional(),
     username: z.string().nonempty().trim().optional(),
     email: z.email().nonempty('Email wajib diisi'),
-    password: z.string().min(8).optional(),
+    password: z.string().optional(),
     confirmPassword: z.string().optional(),
     role: RoleUsersEnum.optional(),
     statusUser: StatusUsersEnum.optional(),
     nik: z.string().min(16, 'Nomor Induk Kependudukan minimal 16 digit').trim().regex(/^[0-9]+$/, 'Nomor Induk Kependudukan hanya boleh mengandung angka').optional(),
   })
-  .refine(
-    d => !d.password || (d.confirmPassword && d.password === d.confirmPassword),
-    { message: 'Password dan konfirmasi tidak cocok ya', path: ['confirmPassword'] }
-  )
+  .refine(data => {
+    if (!data.password) return true;
+    if (data.password.length < 8) return false;
+    if (!data.confirmPassword || data.password !== data.confirmPassword) return false;
+
+    return true;
+  }, {
+    message: 'Password dan konfirmasi harus cocok dan minimal 8 karakter',
+    path: ['confirmPassword'],
+  })
   .strict();
 
 export const updateProfileSchema = z
   .object({
     email: z.string().nonempty().trim().optional(),
     noHp: z.string().min(11, 'Nomor HP minimal 11 digit').max(15, 'Nomor HP Maksimal 15').trim().optional(),
-    password: z.string().min(8).optional(),
+    password: z.string().optional(),
     confirmPassword: z.string().optional(),
   })
-  .refine(
-    d => !d.password || (d.confirmPassword && d.password === d.confirmPassword),
-    { message: 'Password dan konfirmasi tidak cocok', path: ['confirmPassword'] }
-  )
+  .refine(data => {
+    if (!data.password) return true;
+    if (data.password.length < 8) return false;
+    if (!data.confirmPassword || data.password !== data.confirmPassword) return false;
+
+    return true;
+  }, {
+    message: 'Password dan konfirmasi harus cocok dan minimal 8 karakter',
+    path: ['confirmPassword'],
+  })
   .strict();
 
 export const registerSchema = z.discriminatedUnion("role", [
