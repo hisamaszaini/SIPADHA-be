@@ -17,7 +17,7 @@ export const baseCreateUserSchema = z.object({
   username: z.string().nonempty('Username wajib diisi').trim(),
   password: z.string().nonempty('Password wajib diisi').min(8, 'Password minimal 8 karakter'),
   confirmPassword: z.string().nonempty('Konfirmasi password wajib diisi').min(8, 'Konfirmasi password minimal 8 karakter'),
-  StatusUser: StatusUsersEnum,
+  statusUser: StatusUsersEnum,
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Password dan konfirmasi password tidak cocok',
   path: ['confirmPassword'],
