@@ -375,6 +375,15 @@ export class PengajuanSuratService {
           }
 
           pendudukId = pendudukIdFromPayload;
+        } else {
+          // role admin
+          const pendudukExist = await this.prisma.penduduk.findUnique({
+            where: { id: pendudukIdFromPayload },
+          });
+          if (!pendudukExist) {
+            throw new NotFoundException('Penduduk baru tidak ditemukan');
+          }
+          pendudukId = pendudukIdFromPayload;
         }
       }
 

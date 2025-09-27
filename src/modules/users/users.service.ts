@@ -89,7 +89,11 @@ export class UsersService {
    * Update user (oleh admin/pengurus)
    */
   async updateUser(id: number, dto: UpdateUserDto) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: { penduduk: true },
+    });
+    
     if (!user) throw new NotFoundException('User tidak ditemukan');
 
     const data: any = {};
@@ -137,7 +141,15 @@ export class UsersService {
         throw new BadRequestException('NIK sudah terdaftar di user lain');
       }
 
-      // Link ke penduduk
+      // Lepaskan relasi lama jika ada
+      if (user.penduduk && user.penduduk.nik !== dto.nik) {
+        await this.prisma.penduduk.update({
+          where: { nik: user.penduduk.nik },
+          data: { userId: null },
+        });
+      }
+
+      // Link ke penduduk baru
       await this.prisma.penduduk.update({
         where: { nik: dto.nik },
         data: { userId: id },
