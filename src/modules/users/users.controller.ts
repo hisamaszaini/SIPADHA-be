@@ -1,8 +1,8 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { RegisterDto, UpdateProfileDto, UpdateUserDto } from './dto/users.dto';
+import { RegisterDto, registerSchema, UpdateProfileDto, UpdateUserDto } from './dto/users.dto';
 import { UsersService } from './users.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -16,7 +16,16 @@ export class UsersController {
   @Roles('ADMIN', 'PENGURUS')
   @HttpCode(HttpStatus.CREATED)
   create(@Body() dto: RegisterDto) {
-    return this.usersService.create(dto);
+    const validatedData = registerSchema.safeParse(dto);
+    if (!validatedData.success) {
+      const formattedErrors = validatedData.error.flatten();
+      throw new BadRequestException({
+        message: 'Data yang dikirim tidak valid',
+        errors: formattedErrors.fieldErrors,
+      });
+    }
+    const data = validatedData.data;
+    return this.usersService.create(data);
   }
 
   @Get()
@@ -65,7 +74,16 @@ export class UsersController {
   @Roles('ADMIN', 'PENGURUS')
   @HttpCode(HttpStatus.OK)
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.usersService.updateUser(+id, dto);
+    const validatedData = registerSchema.safeParse(dto);
+    if (!validatedData.success) {
+      const formattedErrors = validatedData.error.flatten();
+      throw new BadRequestException({
+        message: 'Data yang dikirim tidak valid',
+        errors: formattedErrors.fieldErrors,
+      });
+    }
+    const data = validatedData.data;
+    return this.usersService.updateUser(+id, data);
   }
 
   @Delete(':id')
