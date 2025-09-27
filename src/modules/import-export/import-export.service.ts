@@ -335,7 +335,7 @@ export class ImportExportService {
                 result.errors.push(...batchResult.errors);
 
                 if (i < batches.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await new Promise(resolve => setTimeout(resolve, 50));
                 }
             }
 

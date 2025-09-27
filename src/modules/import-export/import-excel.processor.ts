@@ -9,26 +9,33 @@ export function createImportWorker(importExportService: ImportExportService) {
     'import-excel',
     async (job: Job) => {
       const { rows } = job.data;
+      const batchSize = 50;
       let successCount = 0;
       let failedCount = 0;
 
-      for (let i = 0; i < rows.length; i++) {
+      for (let i = 0; i < rows.length; i += batchSize) {
+        const batch = rows.slice(i, i + batchSize);
+
         try {
-          await importExportService.importFromExcel([rows[i]]);
-          successCount++;
+          await importExportService.importFromExcel(batch);
+          successCount += batch.length;
         } catch (err) {
-          failedCount++;
+          failedCount += batch.length;
+          console.error('Batch import error:', err.message);
         }
 
-        // update progress per row
-        const progress = Math.round(((i + 1) / rows.length) * 100);
+        await new Promise(resolve => setImmediate(resolve));
+
+        const progress = Math.min(Math.round(((i + batch.length) / rows.length) * 100), 100);
         await job.updateProgress(progress);
       }
 
-      // return summary
       return { successCount, failedCount, total: rows.length };
     },
-    { connection }
+    {
+      connection,
+      concurrency: 1,
+    }
   );
 
   worker.on('completed', (job, result: any) => {

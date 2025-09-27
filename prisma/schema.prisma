@@ -78,7 +78,7 @@ model Rw {
   id      Int    @id @default(autoincrement())
   nomor   String
   dukuhId Int
-  dukuh   Dukuh  @relation(fields: [dukuhId], references: [id])
+  dukuh   Dukuh  @relation(fields: [dukuhId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -93,7 +93,7 @@ model Rt {
   id    Int    @id @default(autoincrement())
   nomor String
   rwId  Int
-  rw    Rw     @relation(fields: [rwId], references: [id])
+  rw    Rw     @relation(fields: [rwId], references: [id], onDelete: Cascade)
 
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
@@ -111,9 +111,9 @@ model KartuKeluarga {
   rtId             Int
   kepalaPendudukId Int?   @unique
 
-  dukuh Dukuh @relation(fields: [dukuhId], references: [id])
-  rw    Rw    @relation(fields: [rwId], references: [id])
-  rt    Rt    @relation(fields: [rtId], references: [id])
+  dukuh Dukuh @relation(fields: [dukuhId], references: [id], onDelete: Cascade)
+  rw    Rw    @relation(fields: [rwId], references: [id], onDelete: Cascade)
+  rt    Rt    @relation(fields: [rtId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -137,18 +137,17 @@ model Penduduk {
   hubunganDalamKeluarga String
 
   kartuKeluargaId Int
-  kartuKeluarga   KartuKeluarga @relation("AnggotaKeluarga", fields: [kartuKeluargaId], references: [id])
+  kartuKeluarga   KartuKeluarga @relation("AnggotaKeluarga", fields: [kartuKeluargaId], references: [id], onDelete: Cascade)
 
   kepalaDariKeluarga KartuKeluarga? @relation("KepalaKeluarga")
 
-  user   User? @relation(fields: [userId], references: [id])
+  user   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int?  @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   pengajuanDibuat PengajuanSurat[] @relation("PemohonSurat")
-
   pengajuanDitargetkan PengajuanSurat[] @relation("TargetSurat")
 }
 
@@ -173,15 +172,15 @@ model PengajuanSurat {
   dataPermohonan Json
   fileHasil      String?
 
-  penduduk   Penduduk    @relation("PemohonSurat", fields: [pendudukId], references: [id])
-  target     Penduduk?   @relation("TargetSurat", fields: [targetId], references: [id])
+  penduduk   Penduduk    @relation("PemohonSurat", fields: [pendudukId], references: [id], onDelete: Cascade)
+  target     Penduduk?   @relation("TargetSurat", fields: [targetId], references: [id], onDelete: Cascade)
   jenisSurat JenisSurat? @relation(fields: [jenisSuratId], references: [id])
 
   createdById   Int
-  createdBy     User      @relation("CreatedSurat", fields: [createdById], references: [id])
+  createdBy     User      @relation("CreatedSurat", fields: [createdById], references: [id], onDelete: Cascade)
   createdAt     DateTime  @default(now())
   validatedById Int?
-  validatedBy   User?     @relation("ValidatorSurat", fields: [validatedById], references: [id])
+  validatedBy   User?     @relation("ValidatorSurat", fields: [validatedById], references: [id], onDelete: SetNull)
   processAt     DateTime?
   processEnd    DateTime?
   updatedAt     DateTime  @updatedAt
