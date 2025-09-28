@@ -23,7 +23,7 @@ export class RtService {
       });
 
       if (exists) {
-        throw new ConflictException("RT already exists in this RW!");
+        throw new ConflictException("RT sudah ada di RW tersebut");
       }
 
       // Check if RW exists
@@ -33,7 +33,7 @@ export class RtService {
       });
 
       if (!rwExists) {
-        throw new NotFoundException("RW not found!");
+        throw new NotFoundException("RW tidak ada");
       }
 
       // Create RT
@@ -57,14 +57,14 @@ export class RtService {
       });
 
       return {
-        message: 'RT created successfully',
+        message: 'RT berhasil ditambahkan',
         data: rt
       };
     } catch (error) {
       if (error instanceof ConflictException || error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to create RT');
+      throw new InternalServerErrorException('Gagal membuat RT baru');
     }
   }
 
@@ -82,7 +82,7 @@ export class RtService {
 
       // Validate pagination parameters
       if (page < 1 || limit < 1 || limit > 100) {
-        throw new BadRequestException('Invalid pagination parameters');
+        throw new BadRequestException('Parameter tidak valid');
       }
 
       // Build where clause for search and filter
@@ -167,7 +167,7 @@ export class RtService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to fetch RTs');
+      throw new InternalServerErrorException('Gagal mengambil data RT');
     }
   }
 
@@ -199,14 +199,14 @@ export class RtService {
       }
 
       return {
-        message: 'RT retrieved successfully',
+        message: 'Data RT berhasil diambil',
         data: rt
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to fetch RT');
+      throw new InternalServerErrorException('Gagal mengambil data RT');
     }
   }
 
@@ -218,7 +218,7 @@ export class RtService {
       });
 
       if (!existingRt) {
-        throw new NotFoundException('RT not found');
+        throw new NotFoundException('RT tidak ditemukan');
       }
 
       // Check if new nomor is already taken in the same RW
@@ -231,7 +231,7 @@ export class RtService {
         });
 
         if (rtExists) {
-          throw new ConflictException('RT number already exists in this RW');
+          throw new ConflictException('Nomor RT sudah ada di RW tersebut');
         }
       }
 
@@ -242,7 +242,7 @@ export class RtService {
         });
 
         if (!rwExists) {
-          throw new NotFoundException('RW not found');
+          throw new NotFoundException('RW tidak ditemukan');
         }
       }
 
@@ -265,7 +265,7 @@ export class RtService {
       });
 
       return {
-        message: 'RT updated successfully',
+        message: 'RT berhasil diperbarui',
         data: rt
       };
     } catch (error) {
@@ -280,7 +280,7 @@ export class RtService {
         throw error;
       }
 
-      throw new InternalServerErrorException('Failed to update RT');
+      throw new InternalServerErrorException('Gagal memperbarui RT');
     }
   }
 
@@ -299,12 +299,12 @@ export class RtService {
       });
 
       if (!rt) {
-        throw new NotFoundException('RT not found');
+        throw new NotFoundException('RT tidak ada');
       }
 
       // Check if RT has Kepala Keluarga
       if (rt._count.KartuKeluarga > 0) {
-        throw new ConflictException('Cannot delete RT that has Kepala Keluarga');
+        throw new ConflictException('RT memiliki Kepala Keluarga, hapus Kepala Keluarga terlebih dahulu');
       }
 
       // Delete RT
@@ -313,18 +313,18 @@ export class RtService {
       });
 
       return {
-        message: 'RT deleted successfully'
+        message: 'RT berhasil dihapus',
       };
     } catch (error) {
       if (error.code === 'P2025') {
-        throw new NotFoundException('RT not found');
+        throw new NotFoundException('RT tidak ada');
       }
 
       if (error instanceof NotFoundException || error instanceof ConflictException) {
         throw error;
       }
 
-      throw new InternalServerErrorException('Failed to delete RT');
+      throw new InternalServerErrorException('Gagal menghapus RT');
     }
   }
 }

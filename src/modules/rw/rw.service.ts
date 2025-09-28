@@ -23,7 +23,7 @@ export class RwService {
       });
 
       if (exists) {
-        throw new ConflictException("RW already exists in this dukuh!");
+        throw new ConflictException("RW sudah ada di dukuh tersebut");
       }
 
       // Check if dukuh exists
@@ -32,7 +32,7 @@ export class RwService {
       });
 
       if (!dukuhExists) {
-        throw new NotFoundException("Dukuh not found!");
+        throw new NotFoundException("Dukuh tidak ada");
       }
 
       // Create RW
@@ -52,14 +52,14 @@ export class RwService {
       });
 
       return {
-        message: 'RW created successfully',
+        message: 'RW berhasil ditambahkan',
         data: rw
       };
     } catch (error) {
       if (error instanceof ConflictException || error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to create RW');
+      throw new InternalServerErrorException('Gagal menambahkan RW');
     }
   }
 
@@ -152,7 +152,7 @@ export class RwService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to fetch RWs');
+      throw new InternalServerErrorException('Gagal mengambil data RW');
     }
   }
 
@@ -176,18 +176,18 @@ export class RwService {
       });
 
       if (!rw) {
-        throw new NotFoundException('RW not found');
+        throw new NotFoundException('RW tidak ada');
       }
 
       return {
-        message: 'RW retrieved successfully',
+        message: 'Data RW berhasil diambil',
         data: rw
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
-      throw new InternalServerErrorException('Failed to fetch RW');
+      throw new InternalServerErrorException('Gagal mengambil data RW');
     }
   }
 
@@ -199,7 +199,7 @@ export class RwService {
       });
 
       if (!existingRw) {
-        throw new NotFoundException('RW not found');
+        throw new NotFoundException('RW tidak ada');
       }
 
       // Check if new nomor is already taken in the same dukuh
@@ -212,7 +212,7 @@ export class RwService {
         });
 
         if (rwExists) {
-          throw new ConflictException('RW number already exists in this dukuh');
+          throw new ConflictException('RW sudah ada di dukuh tersebut');
         }
       }
 
@@ -223,7 +223,7 @@ export class RwService {
         });
 
         if (!dukuhExists) {
-          throw new NotFoundException('Dukuh not found');
+          throw new NotFoundException('Dukuh tidak ada');
         }
       }
 
@@ -242,12 +242,12 @@ export class RwService {
       });
 
       return {
-        message: 'RW updated successfully',
+        message: 'RW berhasil diperbarui',
         data: rw
       };
     } catch (error) {
       if (error.code === 'P2025') {
-        throw new NotFoundException('RW not found');
+        throw new NotFoundException('RW tidak ada');
       }
 
       if (
@@ -257,7 +257,7 @@ export class RwService {
         throw error;
       }
 
-      throw new InternalServerErrorException('Failed to update RW');
+      throw new InternalServerErrorException('Gagal memperbarui RW');
     }
   }
 
@@ -276,12 +276,12 @@ export class RwService {
       });
 
       if (!rw) {
-        throw new NotFoundException('RW not found');
+        throw new NotFoundException('RW tidak ditemukan');
       }
 
       // Check if RW has RTs
       if (rw._count.rts > 0) {
-        throw new ConflictException('Cannot delete RW that has RTs');
+        throw new ConflictException('RW memiliki RT, hapus RT terlebih dahulu');
       }
 
       // Delete RW
@@ -290,18 +290,18 @@ export class RwService {
       });
 
       return {
-        message: 'RW deleted successfully'
+        message: 'RW berhasil dihapus',
       };
     } catch (error) {
       if (error.code === 'P2025') {
-        throw new NotFoundException('RW not found');
+        throw new NotFoundException('RW tidak ditemukan');
       }
 
       if (error instanceof NotFoundException || error instanceof ConflictException) {
         throw error;
       }
 
-      throw new InternalServerErrorException('Failed to delete RW');
+      throw new InternalServerErrorException('Gagal menghapus RW');
     }
   }
 }
