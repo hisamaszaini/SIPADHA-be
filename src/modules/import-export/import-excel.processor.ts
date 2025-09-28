@@ -31,6 +31,9 @@ export function createImportWorker(importExportService: ImportExportService) {
       successCount += batchResult.successCount;
       failedCount += batchResult.failedCount;
 
+      const progress = Math.min(Math.round(((i + batch.length) / rows.length) * 100), 100);
+      await job.updateProgress(progress);
+
       if (i + BATCH_SIZE < rows.length) await new Promise(r => setTimeout(r, DELAY_MS));
     }
 
