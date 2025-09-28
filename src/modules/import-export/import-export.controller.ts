@@ -56,8 +56,8 @@ export class ImportExportController {
         fs.writeFileSync(filePath, file.buffer);
 
         const job = await this.queue.add('import-job', { filePath }, {
-            removeOnComplete: true,
-            removeOnFail: true
+            removeOnComplete: 3,
+            removeOnFail: 3
         });
 
         return { jobId: job.id, message: 'Import job telah diantrikan' };
