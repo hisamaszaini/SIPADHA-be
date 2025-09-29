@@ -40,23 +40,54 @@ export const updateUserSchema = z
   .object({
     noHp: z.string().nonempty('No HP wajib diisi').trim().optional(),
     username: z.string().nonempty().trim().optional(),
-    email: z.email().nonempty('Email wajib diisi'),
+    email: z.string().email('Format email tidak valid').nonempty('Email wajib diisi'),
     password: z.string().optional(),
     confirmPassword: z.string().optional(),
     role: RoleUsersEnum.optional(),
     statusUser: StatusUsersEnum.optional(),
-    nik: z.string().min(16, 'Nomor Induk Kependudukan minimal 16 digit').trim().regex(/^[0-9]+$/, 'Nomor Induk Kependudukan hanya boleh mengandung angka').optional(),
+    nik: z
+      .string()
+      .min(16, 'Nomor Induk Kependudukan minimal 16 digit')
+      .max(16, 'Nomor Induk Kependudukan maksimal 16 digit')
+      .regex(/^[0-9]+$/, 'Nomor Induk Kependudukan hanya boleh mengandung angka')
+      .optional(),
   })
-  .refine(data => {
-    if (!data.password) return true;
-    if (data.password.length < 8) return false;
-    if (!data.confirmPassword || data.password !== data.confirmPassword) return false;
-
-    return true;
-  }, {
-    message: 'Password dan konfirmasi harus cocok dan minimal 8 karakter',
-    path: ['confirmPassword'],
-  })
+  .refine(
+    (data) => {
+      if (!data.password) return true;
+      if (data.password.length < 8) return false;
+      if (!data.confirmPassword || data.password !== data.confirmPassword) return false;
+      return true;
+    },
+    {
+      message: 'Password dan konfirmasi harus cocok dan minimal 8 karakter',
+      path: ['confirmPassword'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role === 'WARGA') {
+        return !!data.nik;
+      }
+      return true;
+    },
+    {
+      message: 'NIK wajib diisi untuk role WARGA',
+      path: ['nik'],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.role !== 'WARGA' && data.nik) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: 'NIK hanya boleh diisi untuk role WARGA',
+      path: ['nik'],
+    }
+  )
   .strict();
 
 export const updateProfileSchema = z
